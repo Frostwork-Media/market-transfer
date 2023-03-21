@@ -7,7 +7,11 @@ export default function Button({handleComplete}) {
         const slug = "will-trump-be-arrested-on-tuesday";
         const data = await getMarketBySlug(slug)
         const prettyCloseTime = new Date(data.closeTime).toLocaleString();
-        let output = "Question: " + data.question + "| Close date" + prettyCloseTime + "| Description: " + data.textDescription;
+        let output = {
+            question: data.question,
+            closeTime: prettyCloseTime,
+            textDescription: data.textDescription
+        }
         handleComplete(output)
     }
 
