@@ -1,21 +1,20 @@
 'use client';
 import { getMarketBySlug } from '../lib/api'
 
-export default function Button({handleComplete}) {
+export default function Button({handleComplete, slug}) {
     const handleSubmit = async () => {
         //get data from search
-        const slug = "will-trump-be-arrested-on-tuesday";
         const data = await getMarketBySlug(slug)
-        const prettyCloseTime = new Date(data.closeTime).toLocaleString();
+        const closeTime = new Date(data.closeTime);
         let output = {
             question: data.question,
-            closeTime: prettyCloseTime,
+            closeTime: closeTime,
             textDescription: data.textDescription
         }
         handleComplete(output)
     }
 
     return (
-        <p onClick={handleSubmit} className="bg-black text-white rounded-full p-2 shadow hover:text-black hover:bg-white hover:border hover:border-black" >Do Thing</p>
+        <button onClick={handleSubmit} className="ml-2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" >🔍</button>
     )
 }
