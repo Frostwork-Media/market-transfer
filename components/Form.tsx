@@ -53,64 +53,62 @@ export default function Component() {
     }
 
     return (
-        <main>
-            <div className="h-screen flex justify-center">
-                <div className="flex flex-col sm:w-1/3">
-                    <div className="relative w-full my-auto">
-                        <div className='inline-flex'>
-                            <input
-                                type="text"
-                                id="search"
-                                placeholder="Enter slug"
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                value={slug}
-                                onChange={handleInputChange}
-                            />
-                            <button onClick={handleSubmit} className="ml-2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" >🔍</button>
+        <div className="h-screen flex justify-center">
+            <div className="flex flex-col sm:w-1/3">
+                <div className="relative w-full my-auto">
+                    <div className='inline-flex'>
+                        <input
+                            type="text"
+                            id="search"
+                            placeholder="Enter slug"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            value={slug}
+                            onChange={handleInputChange}
+                        />
+                        <button onClick={handleSubmit} className="ml-2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" >🔍</button>
 
+                    </div>
+                    <div>
+                        <div className="my-4">
+                            <label htmlFor="question-title" className="block text-sm font-medium text-gray-700 ">Question Title</label>
+                            <textarea
+                                id="question-title"
+                                name="question-title"
+                                rows="1"
+                                className="block w-full mt-1 border border-gray-200 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                value={questionTitle || ''}
+                                onChange={handleQuestionTitleChange}
+                            ></textarea>
                         </div>
-                        <div>
-                            <div className="my-4">
-                                <label htmlFor="question-title" className="block text-sm font-medium text-gray-700 ">Question Title</label>
-                                <textarea
-                                    id="question-title"
-                                    name="question-title"
-                                    rows="1"
-                                    className="block w-full mt-1 border border-gray-200 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    value={questionTitle || ''}
-                                    onChange={handleQuestionTitleChange}
-                                ></textarea>
-                            </div>
-                            <div className="my-4">
-                                <label htmlFor="question-close-time" className="block text-sm font-medium text-gray-700">Question Close Time</label>
-                                <DatePicker
-                                    id="question-close-time"
-                                    name="question-close-time"
-                                    className="block mt-1 border border-gray-200 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    selected={questionCloseTime}
-                                    onChange={(date) => setQuestionCloseTime(date)}
-                                />
-                            </div>
-                            <div className="my-4">
-                                <label htmlFor="question-text" className="block text-sm font-medium text-gray-700">Question Description</label>
-                                <textarea
-                                    id="question-text"
-                                    name="question-text"
-                                    rows="5"
-                                    className="block w-full mt-1 border border-gray-200 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    value={questionTextDescription || ''}
-                                    onChange={handleQuestionTextDescriptionChange}
-                                ></textarea>
-                            </div>
-                            <div className="my-4">
-                                <button onClick={handleCopyToClipboard} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                    Copy to Clipboard
-                                </button>
-                            </div>
+                        <div className="my-4">
+                            <label htmlFor="question-close-time" className="block text-sm font-medium text-gray-700">Question Close Time</label>
+                            <DatePicker
+                                id="question-close-time"
+                                name="question-close-time"
+                                className="block mt-1 border border-gray-200 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                selected={questionCloseTime}
+                                onChange={(date) => setQuestionCloseTime(date)}
+                            />
+                        </div>
+                        <div className="my-4">
+                            <label htmlFor="question-text" className="block text-sm font-medium text-gray-700">Question Description</label>
+                            <textarea
+                                id="question-text"
+                                name="question-text"
+                                rows="5"
+                                className="block w-full mt-1 border border-gray-200 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                value={questionTextDescription || ''}
+                                onChange={handleQuestionTextDescriptionChange}
+                            ></textarea>
+                        </div>
+                        <div className="my-4">
+                            <button onClick={handleCopyToClipboard} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                Copy to Clipboard
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     )
 }
