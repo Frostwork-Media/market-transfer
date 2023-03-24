@@ -38,7 +38,8 @@ export default function Component() {
     };
 
     const handleSubmit = async () => {
-        if (slug.includes('http') || slug.includes('https')) {
+        const isUrl = /^(?:https?:\/\/)?(?:www\.)?[^\s]+\.[^\s]+$/
+        if (isUrl.test(slug)) {
             return alert('Please enter a slug, not a URL')
         }
         //get data from search
