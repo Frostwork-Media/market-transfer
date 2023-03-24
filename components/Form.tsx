@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { getMarketBySlug } from '../lib/api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { objectToParams } from '../lib/utils'
 
 export default function Component() {
     const [questionTitle, setQuestionTitle] = useState(null)
@@ -53,9 +54,8 @@ export default function Component() {
     }
 
     return (
-        <div className="h-screen flex justify-center">
-            <div className="flex flex-col sm:w-1/3">
-                <div className="relative w-full my-auto">
+
+                <div className="relative w-full">
                     <div className='inline-flex'>
                         <input
                             type="text"
@@ -65,7 +65,7 @@ export default function Component() {
                             value={slug}
                             onChange={handleInputChange}
                         />
-                        <button onClick={handleSubmit} className="ml-2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" >🔍</button>
+                        <button onClick={handleSubmit} className="ml-2 p-2 bg-blue-500  rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" >🔍</button>
 
                     </div>
                     <div>
@@ -75,7 +75,7 @@ export default function Component() {
                                 id="question-title"
                                 name="question-title"
                                 rows="1"
-                                className="block w-full mt-1 border border-gray-200 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                 value={questionTitle || ''}
                                 onChange={handleQuestionTitleChange}
                             ></textarea>
@@ -85,7 +85,7 @@ export default function Component() {
                             <DatePicker
                                 id="question-close-time"
                                 name="question-close-time"
-                                className="block mt-1 border border-gray-200 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                className="block mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                 selected={questionCloseTime}
                                 onChange={(date) => setQuestionCloseTime(date)}
                             />
@@ -96,19 +96,46 @@ export default function Component() {
                                 id="question-text"
                                 name="question-text"
                                 rows="5"
-                                className="block w-full mt-1 border border-gray-200 text-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                 value={questionTextDescription || ''}
                                 onChange={handleQuestionTextDescriptionChange}
                             ></textarea>
                         </div>
                         <div className="my-4">
-                            <button onClick={handleCopyToClipboard} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            <button onClick={handleCopyToClipboard} className="bg-blue-500 hover:bg-blue-700  font-bold py-2 px-4 rounded mt-4">
                                 Copy to Clipboard
+                            </button>
+                            <button
+                                className="bg-blue-500 hover:bg-blue-700  font-bold py-2 px-4 rounded mt-4"
+                                onClick={() => {
+                                    const manifoldParams = objectToParams({
+                                        q: questionTitle,
+                                        description: {
+                                            content: [
+                                                {
+                                                    type: "paragraph",
+                                                    content: [
+                                                      {
+                                                        type: "text",
+                                                        text: questionTextDescription
+                                                      }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        outcomeType: 'BINARY',
+                                        visability: 'public'
+                                    })
+                                    console.log(manifoldParams)
+                                    const url = `https://manifold.markets/create?${manifoldParams}`;
+                                    window.open(url, "_blank");
+                                }}
+                            >
+                                Post to Manifold
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+ 
     )
 }
