@@ -38,12 +38,19 @@ export default function Component() {
     };
 
     const handleSubmit = async () => {
+        let value;
+        
         const isUrl = /^(?:https?:\/\/)?(?:www\.)?[^\s]+\.[^\s]+$/
+        
         if (isUrl.test(slug)) {
-            return alert('Please enter a slug, not a URL')
+            value = slug.split('/').pop();
+        } else {
+            value = slug;
         }
+
+        if(!value) return alert('Please enter a slug or url')
         //get data from search
-        const data = await getMarketBySlug(slug);
+        const data = await getMarketBySlug(value);
         const closeTime = new Date(data.closeTime);
         let output = {
             question: data.question,
@@ -61,7 +68,7 @@ export default function Component() {
                         <input
                             type="text"
                             id="search"
-                            placeholder="Enter slug"
+                            placeholder="Enter slug or url"
                             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             value={slug}
                             onChange={handleInputChange}
