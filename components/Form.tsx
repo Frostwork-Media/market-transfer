@@ -129,12 +129,12 @@ export default function Component() {
                                                       }
                                                     ]
                                                 }
-                                            ]
+                                            ],
+                                            type: 'doc',
                                         },
                                         outcomeType: 'BINARY',
-                                        visability: 'public'
+                                        visibility: 'public'
                                     })
-                                    console.log(manifoldParams)
                                     const url = `https://manifold.markets/create?${manifoldParams}`;
                                     window.open(url, "_blank");
                                 }}
