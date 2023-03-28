@@ -1,10 +1,8 @@
 'use client';
-import React from 'react';
 import Form from '../components/Form'
-import { Link } from 'react-router-dom';
+import Link from 'next/link'
 
 export default function Home() {
-
     return (
         <main className=''>
             <div className="min-h-screen flex flex-col justify-center items-center">
@@ -17,7 +15,7 @@ export default function Home() {
                                 <Form />
                             </div>
                             <a href="https://chat.whatsapp.com/DKKQ5wESCOHGeN5nCFVotI" target='_blank' className="bg-green-500 hover:bg-green-700  font-bold py-2 px-4 rounded-full mt-8">Say hi👋 or report bugs🐛 (whatsapp chat)</a>
-                            <Link to="/new-page" className="text-blue-500 hover:text-blue-700">Go to New Page</Link>
+                            <Link href="/new-page" className="text-blue-500 hover:text-blue-700">Go to New Page</Link>
                         </div>
                     </div>
                 </div>
