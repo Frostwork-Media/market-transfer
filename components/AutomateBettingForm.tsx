@@ -1,16 +1,28 @@
 'use client';
 
 import React, { useState } from 'react';
+import { getMarketBySlug } from '@/lib/api';
+import { buy, myWinChance } from '@/lib/probabilityCalculations';";
 
-function parseSpreadsheetData(text) {
+const parseSpreadsheetData = async (text) => {
     const rows = text.trim().split('\n');
-    const data = rows.map(row => {
+    let data = [];
+
+    for ( let row of rows ) {
         const columns = row.split('\t');
-        return {
-            column1: columns[0],
-            column2: columns[1]
-        };
-    });
+        const response = await getMarketBySlug(columns[0]);
+        console.log(data);
+        const roundedProbility = Math.round(response.probability * 1000) / 10; // 3 decimal places
+        const buy = buy(respose.probability, myProbability);   
+        data.push({
+            slug: columns[0],
+            questionTitle: response.question,
+            marketProbability: `${roundedProbility}%`,
+            buy: buy,
+            myProbability: columns[1],
+        });
+    }
+ 
     return data;
 }
 
@@ -22,11 +34,12 @@ export default function SpreadsheetForm() {
         setRawData(event.target.value);
     };
 
-    const handleParseData = () => {
+    const handleParseData = async () => {
         try {
-            const data = parseSpreadsheetData(rawData);
+            const data = await parseSpreadsheetData(rawData);
             setParsedData(data);
         } catch (error) {
+            console.log(error)
             alert('Error parsing the pasted data. Please ensure it is in the correct format.');
         }
     };
@@ -55,7 +68,7 @@ export default function SpreadsheetForm() {
                     <ul className="list-disc pl-5">
                         {parsedData.map((row, index) => (
                             <li key={index}>
-                                {row.column1} - {row.column2}
+                                {row.slug} - {row.questionTitle} - {row.marketProbability} - {row.myProbability}
                             </li>
                         ))}
                     </ul>
