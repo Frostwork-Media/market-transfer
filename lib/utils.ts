@@ -9,3 +9,11 @@ export function objectToParams(obj) {
     }
     return urlParams.toString();
 }
+
+export function floatToPercent(f: number): string {
+  return `${Math.round(f * 1000) / 10}%`; 
+}
+
+export function round2SF(f: number): number {
+  return Math.round(f * 100) / 100;
+}
