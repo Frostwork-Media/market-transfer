@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getMarketBySlug } from '@/lib/api';
+import { getMarketBySlug, placeBetBySlug } from '@/lib/api';
 import calc from '@/lib/probabilityCalculations';
 import { floatToPercent, round2SF} from '@/lib/utils';
 
@@ -16,7 +16,6 @@ const sortData = (data, sortBy, direction) => {
         return 0;
     });
 };
-
 
 const parseSpreadsheetData = async (text) => {
     const rows = text.trim().split('\n');
@@ -37,16 +36,17 @@ const parseSpreadsheetData = async (text) => {
         const roundedProbility = Math.round(response.probability * 1000) / 10; // 3 decimal places
         data.push({
             slug: columns[0],
-            questionTitle: response.question,
-            marketProbability: marketProbability,
-            myProbability: myProbability,
-            thingToBuy: thingToBuy ? "Yes" : "No",
-            marketWinChance: marketWinChance,
-            myWinChance: myWinChance,
+            title: response.question,
+            marketP: marketProbability,
+            myP: myProbability,
+            buy: thingToBuy ? "YES" : "NO",
+            //marketWinChance: marketWinChance,
+            //myWinChance: myWinChance,
             marketReturn: marketReturn,
-            kellyBetProportion: kellyBetProportion,
-            betEVreturn: betEVreturn,
-            betROI: betROI,
+            kellyPerc: kellyBetProportion,
+            //betEVreturn: betEVreturn,
+            rOI: betROI,
+            button: ""
         });
     }
     return data;
@@ -68,11 +68,16 @@ const TableHeaders = ({data, sortFn, direction, sortBy}) => {
 }
 
 export default function SpreadsheetForm() {
+    const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || '');
     const [rawData, setRawData] = useState('');
     const [parsedData, setParsedData] = useState([]);
     const [sortBy, setSortBy] = useState('slug');
     const [sortDirection, setSortDirection] = useState('asc');
     const [sortedData, setSortedData] = useState([]);
+
+    const handleAPIKeyChange = (event) => {
+        setApiKey(event.target.value);
+    };
 
     const handleTextareaChange = (event) => {
         setRawData(event.target.value);
@@ -88,6 +93,11 @@ export default function SpreadsheetForm() {
         }
     };
 
+    const handleBet = (slug, outcomeToBuy, amountToPay) => {
+        console.log("Button clicked, attempting to place $", amountToPay, "on", outcomeToBuy, "for", slug)
+        placeBetBySlug(apiKey, slug, amountToPay, outcomeToBuy);
+    } 
+
     const handleSort = (sortBy) => {
         setSortBy(sortBy);
         setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -100,6 +110,17 @@ export default function SpreadsheetForm() {
 
     return (
         <div className="w-full">
+                        <div className="my-4">
+                <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key</label>
+                <textarea
+                    id="api-key"
+                    name="api-key"
+                    rows="1"
+                    className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={apiKey}
+                    onChange={handleAPIKeyChange}
+                ></textarea>
+            </div>
             <div className="my-4">
                 <label htmlFor="spreadsheet-data" className="block text-sm font-medium text-gray-700">Paste Spreadsheet Data</label>
                 <textarea
@@ -129,16 +150,19 @@ export default function SpreadsheetForm() {
                             {sortedData.map((row, index) => (
                                 <tr key={index}>
                                     <td className="border px-4 py-2">{row.slug}</td>
-                                    <td className="border px-4 py-2">{row.questionTitle}</td>
-                                    <td className="border px-4 py-2">{floatToPercent(row.marketProbability)}</td>
-                                    <td className="border px-4 py-2">{floatToPercent(row.myProbability)}</td>
-                                    <td className="border px-4 py-2">{row.thingToBuy}</td>
-                                    <td className="border px-4 py-2">{floatToPercent(row.marketWinChance)}</td>
-                                    <td className="border px-4 py-2">{floatToPercent(row.myWinChance)}</td>
+                                    <td className="border px-4 py-2">{row.title}</td>
+                                    <td className="border px-4 py-2">{floatToPercent(row.marketP)}</td>
+                                    <td className="border px-4 py-2">{floatToPercent(row.myP)}</td>
+                                    <td className="border px-4 py-2">{row.buy}</td>
+                                    {/*<td className="border px-4 py-2">{floatToPercent(row.marketWinChance)}</td>
+                                    <td className="border px-4 py-2">{floatToPercent(row.myWinChance)}</td>*/}
                                     <td className="border px-4 py-2">{round2SF(row.marketReturn)}</td>
-                                    <td className="border px-4 py-2">{round2SF(row.kellyBetProportion)}</td>
-                                    <td className="border px-4 py-2">{round2SF(row.betEVreturn)}</td>
-                                    <td className="border px-4 py-2">{round2SF(row.betROI)}</td>
+                                    <td className="border px-4 py-2">{round2SF(row.kellyPerc)}</td>
+                                    {/*<td className="border px-4 py-2">{round2SF(row.betEVreturn)}</td>*/}
+                                    <td className="border px-4 py-2">{round2SF(row.rOI)}</td>
+                                    <td className="border px-4 py-2"> <button onClick={() => handleBet(row.slug, row.buy, 100)} className="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded">
+                                        Bet M100
+                                    </button></td>
                                 </tr>
                             ))}
                         </tbody>
