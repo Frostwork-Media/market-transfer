@@ -1,4 +1,4 @@
-import GPT4castingForm from './components/GPT4castingForm';
+import GPT4castingForm from '../../components/GPT4castingForm';
 
 export default function Page({}){
     return (

@@ -82,7 +82,7 @@ export default function Component() {
                             <textarea
                                 id="question-title"
                                 name="question-title"
-                                rows="1"
+                                rows={1}
                                 className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                 value={questionTitle || ''}
                                 onChange={handleQuestionTitleChange}
@@ -103,7 +103,7 @@ export default function Component() {
                             <textarea
                                 id="question-text"
                                 name="question-text"
-                                rows="5"
+                                rows={1}
                                 className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                 value={questionTextDescription || ''}
                                 onChange={handleQuestionTextDescriptionChange}

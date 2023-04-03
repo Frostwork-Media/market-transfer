@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getMarketBySlug, placeBetBySlug } from '@/lib/api';
-import calc from '@/lib/probabilityCalculations';
+import * as calc from '../lib/probabilityCalculations';
 import { floatToPercent, round2SF} from '@/lib/utils';
 
 const sortData = (data, sortBy, direction) => {
@@ -30,7 +30,7 @@ const parseSpreadsheetData = async (text) => {
         const marketWinChance = calc.marketWinChance(response.probability, thingToBuy);
         const myWinChance = calc.myWinChance(myProbability, thingToBuy);
         const marketReturn = calc.marketReturn(marketWinChance);
-        const kellyBetProportion = calc.kellyBetProportion(marketReturn, myProbability, thingToBuy);
+        const kellyBetProportion = calc.kellyBetProportion(marketReturn, myProbability);
         const betEVreturn = calc.betEVreturn(marketWinChance, myWinChance);
         const betROI = calc.betROI(betEVreturn, marketWinChance);
         const roundedProbility = Math.round(response.probability * 1000) / 10; // 3 decimal places
@@ -116,7 +116,7 @@ export default function SpreadsheetForm() {
                 <textarea
                     id="api-key"
                     name="api-key"
-                    rows="1"
+                    rows={1}
                     className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     value={apiKey}
                     onChange={handleAPIKeyChange}
@@ -127,7 +127,7 @@ export default function SpreadsheetForm() {
                 <textarea
                     id="spreadsheet-data"
                     name="spreadsheet-data"
-                    rows="5"
+                    rows={5}
                     className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     value={rawData}
                     onChange={handleTextareaChange}
