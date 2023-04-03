@@ -26,3 +26,12 @@ export async function placeBetBySlug(apiKey, slug, betAmount, outcomeToBuy) {
 }
 
 // place bet by other things
+
+export function getGroupBySlug(slug) {
+  return fetch(`https://manifold.markets/api/v0/group/${slug}`).then(res => res.json()).then(group => group.id);
+}
+
+export function getMarketsByGroupID(groupID) {
+  return fetch(`https://manifold.markets/api/v0/group/${groupID}`).then(res => res.json());
+}
+

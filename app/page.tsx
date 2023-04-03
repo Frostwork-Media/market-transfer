@@ -15,7 +15,8 @@ export default function Home() {
                                 <Form />
                             </div>
                             <a href="https://chat.whatsapp.com/DKKQ5wESCOHGeN5nCFVotI" target='_blank' className="bg-green-500 hover:bg-green-700  font-bold py-2 px-4 rounded-full mt-8">Say hi👋 or report bugs🐛 (whatsapp chat)</a>
-                            <Link href="/automate-betting" className="text-blue-500 hover:text-blue-700">Go to Automate Betting Page</Link>
+                            <Link href="/automate-betting" className="text-blue-500 hover:text-blue-700">Automate Betting</Link>
+                            <Link href="/GPT4casting" className="text-blue-500 hover:text-blue-700">GPT-4casting</Link>
                         </div>
                     </div>
                 </div>
