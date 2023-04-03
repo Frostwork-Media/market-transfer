@@ -1,11 +1,11 @@
-const buyYes = (marketProbability, myProbability ) => {
+export const buyYes = (marketProbability, myProbability ) => {
     if(typeof marketProbability !== 'number' || typeof myProbability !== 'number')
         throw 'marketProbability and myProbability must be numbers';
     
     return marketProbability <= myProbability;
 }
 
-const marketWinChance = (marketProbability, buyYes) => {
+export const marketWinChance = (marketProbability, buyYes) => {
     if(buyYes)  {
         return marketProbability;
     } else {
@@ -13,7 +13,7 @@ const marketWinChance = (marketProbability, buyYes) => {
     }
 }
 
-const myWinChance = (myProbability, buyYes) => {
+export const myWinChance = (myProbability, buyYes) => {
     if(buyYes) {
         return myProbability;
     } else {
@@ -21,33 +21,22 @@ const myWinChance = (myProbability, buyYes) => {
     }
 }   
 
-const marketReturn = (marketWinChance) => {
+export const marketReturn = (marketWinChance) => {
     return (1 - marketWinChance)/marketWinChance;
 }
 
-const kellyBetProportion = (marketReturn, myWinChance) => {
+export const kellyBetProportion = (marketReturn, myWinChance) => {
     return myWinChance - (1 - myWinChance)/marketReturn;
 }
 
-const kellyBet = (myBalance, kellyBetProportion) => {
+export const kellyBet = (myBalance, kellyBetProportion) => {
     return myBalance * kellyBetProportion;
 }
 
-const betEVreturn = (marketWinChance, myWinChance) => {
+export const betEVreturn = (marketWinChance, myWinChance) => {
     return myWinChance - marketWinChance
 }
 
-const betROI = (betEVreturn, marketWinChance) => {
+export const betROI = (betEVreturn, marketWinChance) => {
     return betEVreturn/marketWinChance;
-}
-
-export default { 
-    buyYes, 
-    marketWinChance, 
-    myWinChance, 
-    marketReturn, 
-    kellyBetProportion, 
-    kellyBet, 
-    betEVreturn, 
-    betROI 
 }

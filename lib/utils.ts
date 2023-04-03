@@ -4,7 +4,7 @@ export function objectToParams(obj) {
       // Stringify JSON values
       const strValue = typeof value === 'object' ? JSON.stringify(value) : value;
       
-      const encodedValue = strValue;
+      const encodedValue = strValue.toString();
       urlParams.append(key, encodedValue);
     }
     return urlParams.toString();
