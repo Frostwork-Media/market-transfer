@@ -1,3 +1,12 @@
+Welcome!
+
+House rules:
+* This is messy and things will break
+* Feel free to submit pull requests. I'm a pretty novice coder so giving me context of why you have changed something increases likelihood of accepting
+* I am a chill dictator - you can suggest or ask what you like and I almost certainly won't be upset, but I won't feel obliged to do or answer it
+* Chat about it with me on the [WhatsApp chat](https://chat.whatsapp.com/DKKQ5wESCOHGeN5nCFVotI)
+* Let's build some cool stuff!
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
