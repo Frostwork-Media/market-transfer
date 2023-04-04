@@ -61,7 +61,7 @@ const TableHeaders = ({data, sortFn, direction, sortBy}) => {
         <>
             {keys.map((title, i) => {
                 if(sortBy === title)
-                    return <th key={i} onClick={() => sortFn(title)} className="border px-4 py-2 cursor-pointer uppercase">{`${title} ${direction === 'asc' ? '▲' : '▼'} `}</th>
+                    return <th key={i} onClick={() => sortFn(title)} className="border px-4 py-2 cursor-pointer uppercase">{`${title} ${direction === 'asc' ? '▼' : '▲'} `}</th>
                 
                 return <th key={i} onClick={() => sortFn(title)} className="border px-4 py-2 cursor-pointer uppercase">{title}</th>
             })}
@@ -73,8 +73,8 @@ export default function SpreadsheetForm() {
     const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || '');
     const [rawData, setRawData] = useState('');
     const [parsedData, setParsedData] = useState([]);
-    const [sortBy, setSortBy] = useState('slug');
-    const [sortDirection, setSortDirection] = useState('asc');
+    const [sortBy, setSortBy] = useState('rOI');
+    const [sortDirection, setSortDirection] = useState('desc');
     const [sortedData, setSortedData] = useState([]);
 
     const handleAPIKeyChange = (event) => {
@@ -143,7 +143,7 @@ export default function SpreadsheetForm() {
                     <table className="table-auto w-full">
                         <thead>
                             <tr>
-                                <TableHeaders data={parsedData} sortFn={handleSort} direction={sortDirection} sortBy={sortBy}/>
+                                <TableHeaders data={parsedData} sortFn={handleSort} direction={sortDirection} sortBy={sortBy} />
                             </tr>
                         </thead>
                         <tbody>
