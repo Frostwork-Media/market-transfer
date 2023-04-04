@@ -71,8 +71,10 @@ const TableHeaders = ({data, sortFn, direction, sortBy}) => {
 
 export default function SpreadsheetForm() {
     const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || '');
-    const [rawData, setRawData] = useState('');
-    const [parsedData, setParsedData] = useState([]);
+    const storedRawData = window?.localStorage.getItem('raw-data')
+    const [rawData, setRawData] = useState(storedRawData || '');
+    const storedParsedData = JSON.parse(window?.localStorage.getItem('parsed-data'))
+    const [parsedData, setParsedData] = useState( storedParsedData || []);
     const [sortBy, setSortBy] = useState('rOI');
     const [sortDirection, setSortDirection] = useState('desc');
     const [sortedData, setSortedData] = useState([]);
@@ -83,12 +85,14 @@ export default function SpreadsheetForm() {
 
     const handleTextareaChange = (event) => {
         setRawData(event.target.value);
+        window?.localStorage.setItem('raw-data', event.target.value)
     };
 
     const handleParseData = async () => {
         try {
             const data = await parseSpreadsheetData(rawData);
             setParsedData(data);
+            window?.localStorage.setItem('parsed-data', JSON.stringify(data))
         } catch (error) {
             console.log(error)
             alert('Error parsing the pasted data. Please ensure it is in the correct format.');
@@ -96,8 +100,15 @@ export default function SpreadsheetForm() {
     };
 
     const handleBet = (slug, outcomeToBuy, amountToPay) => {
-        console.log("Button clicked, attempting to place $", amountToPay, "on", outcomeToBuy, "for", slug)
-        placeBetBySlug(apiKey, slug, amountToPay, outcomeToBuy);
+        return placeBetBySlug(apiKey, slug, amountToPay, outcomeToBuy)
+        .then(() => {
+            alert(`Bet placed successfully!`);
+            // then get updated probability and update the table
+        })
+        .catch((error) => {
+            console.log(error)
+            alert(`Error placing bet. ${error}`);
+        });
     } 
 
     const handleSort = (sortBy) => {
@@ -134,6 +145,9 @@ export default function SpreadsheetForm() {
                     onChange={handleTextareaChange}
                 ></textarea>
             </div>
+
+
+            
             <div className="my-4">
                 <LoadingButton passOnClick={handleParseData} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Create Table"}/>                  
             </div>
@@ -160,7 +174,7 @@ export default function SpreadsheetForm() {
                                     <td className="border px-4 py-2">{round2SF(row.kellyPerc)}</td>
                                     {/*<td className="border px-4 py-2">{round2SF(row.betEVreturn)}</td>*/}
                                     <td className="border px-4 py-2">{round2SF(row.rOI)}</td>
-                                    <LoadingButton passOnClick={() => handleBet(row.slug, row.buy, 100)} classNames="border px-4 py-2 g-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Bet M100"}/>
+                                    <LoadingButton passOnClick={() => handleBet(row.slug, row.buy, 100)} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Bet M100"}/>
                                 </tr>
                             ))}
                         </tbody>
