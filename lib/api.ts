@@ -22,7 +22,8 @@ export function placeBet(apiKey, marketID, betAmount, outcomeToBuy){
 export async function placeBetBySlug(apiKey, slug, betAmount, outcomeToBuy) {
   const marketID = await getIDBySlug(slug);
   console.log(`marketID is ${marketID}`);
-  await placeBet(apiKey, marketID, betAmount, outcomeToBuy);
+  const bet = await placeBet(apiKey, marketID, betAmount, outcomeToBuy);
+  return bet;
 }
 
 // place bet by other things

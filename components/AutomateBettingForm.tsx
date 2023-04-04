@@ -160,9 +160,7 @@ export default function SpreadsheetForm() {
                                     <td className="border px-4 py-2">{round2SF(row.kellyPerc)}</td>
                                     {/*<td className="border px-4 py-2">{round2SF(row.betEVreturn)}</td>*/}
                                     <td className="border px-4 py-2">{round2SF(row.rOI)}</td>
-                                    <td className="border px-4 py-2"> <button onClick={() => handleBet(row.slug, row.buy, 100)} className="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded">
-                                        Bet M100
-                                    </button></td>
+                                    <LoadingButton passOnClick={() => handleBet(row.slug, row.buy, 100)} classNames="border px-4 py-2 g-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Bet M100"}/>
                                 </tr>
                             ))}
                         </tbody>
