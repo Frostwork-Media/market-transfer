@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { getMarketBySlug, placeBetBySlug } from '@/lib/api';
 import * as calc from '../lib/probabilityCalculations';
 import { floatToPercent, round2SF} from '@/lib/utils';
+import LoadingButton from './LoadingButton';
 
 const sortData = (data, sortBy, direction) => {
     return data.sort((a, b) => {
@@ -134,9 +135,7 @@ export default function SpreadsheetForm() {
                 ></textarea>
             </div>
             <div className="my-4">
-                <button onClick={handleParseData} className="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded">
-                    Parse Data
-                </button>
+                <LoadingButton passOnClick={handleParseData} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Create Table"}/>                  
             </div>
             {sortedData.length > 0 && (
                 <div className="my-4 overflow-scroll w-full max-w-5xl"> 
