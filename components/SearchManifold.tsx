@@ -20,7 +20,7 @@ export default function Search({ handleSelect, selectedMarkets }) {
         <>
             <div className="relative">
             <input className='w-full border p-2' type="text" placeholder="Search" onChange={handleSearch}  onFocus={() => setIsResultsVisible(true)} onBlur={() => setTimeout(() => setIsResultsVisible(false), 200)} />
-                <ul className={`w-full bg-gray-500 bg-opacity-50 text-black absolute max-w-5xl text-xs max-h-96 overflow-scroll space-y-2 bg-opacity-100  ${isResultsVisible ? 'block' : 'hidden'}`}>
+                <ul className={`w-full bg-white bg-opacity-100 text-black absolute max-w-5xl text-xs max-h-96 overflow-scroll space-y-2  ${isResultsVisible ? 'block' : 'hidden'}`}>
                     {results.map((result, index) => {
                         return (
                             <li key={index} >{
