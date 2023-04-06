@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 export default function Search({ handleSelect, selectedMarkets }) {
     const [results, setResults] = useState([])
+    const [isResultsVisible, setIsResultsVisible] = useState(false);
 
     const handleSearch = async (e) => {
         const term = e.target.value
@@ -17,19 +18,20 @@ export default function Search({ handleSelect, selectedMarkets }) {
 
     return (
         <>
-            <input className='w-full border p-2' type="text" placeholder="Search" onChange={handleSearch} />
-            <ul className='w-full max-w-5xl text-xs max-h-96 overflow-scroll space-y-2'>
-                {results.map((result, index) => {
-                    return (
-                        <li key={index} >{
-                            <>  
-                                <p className='truncate cursor-pointer' onClick={() => handleSelect(result)}>Question: {result.question}</p>
-                            </>
-                        }</li>
-                    )
+            <div className="relative">
+            <input className='w-full border p-2' type="text" placeholder="Search" onChange={handleSearch}  onFocus={() => setIsResultsVisible(true)} onBlur={() => setTimeout(() => setIsResultsVisible(false), 200)} />
+                <ul className={`w-full bg-gray-500 bg-opacity-50 text-black absolute max-w-5xl text-xs max-h-96 overflow-scroll space-y-2 bg-opacity-100  ${isResultsVisible ? 'block' : 'hidden'}`}>
+                    {results.map((result, index) => {
+                        return (
+                            <li key={index} >{
+                                <>
+                                    <p className='truncate cursor-pointer' onClick={() => handleSelect(result)}>Question: {result.question}</p>
+                                </>
+                            }</li>
+                        )
                 })}
             </ul>
-
+            </div>
         </>
     )
 }
