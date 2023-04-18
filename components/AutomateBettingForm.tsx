@@ -21,7 +21,7 @@ const sortData = (data, sortBy, direction) => {
 };
 
 const updateParsedData = async (slug, myProbability) => {
-    const response = await getMarketBySlug(columns[0]);
+    const response = await getMarketBySlug(slug);
     const marketProbability = parseFloat(response.probability);
     const thingToBuy = calc.buyYes(response.probability, myProbability);
     const marketWinChance = calc.marketWinChance(response.probability, thingToBuy);
@@ -32,7 +32,7 @@ const updateParsedData = async (slug, myProbability) => {
     const betROI = calc.betROI(betEVreturn, marketWinChance);
     const roundedProbility = Math.round(response.probability * 1000) / 10; // 3 decimal places
     return {
-        slug: columns[0],
+        slug: slug,
         title: response.question,
         marketP: marketProbability,
         myP: myProbability,
@@ -172,11 +172,26 @@ export default function SpreadsheetForm() {
             });
     }
 
-    const handleMyPChange = (index, value) => {
-        const newParsedData = parsedData.slice();
-        newParsedData[index].myP = parseFloat(value) / 100;
-        setParsedData(newParsedData);
-        window?.localStorage.setItem('parsed-data', JSON.stringify(newParsedData));
+    const handleMyPChange = async (index, value) => {
+        // Convert percentage value back to a float between 0 and 1
+        const newMyProbability = parseFloat(value) / 100;
+        const slug = parsedData[index].slug;
+      
+        // Call the updateParsedData function to get the updated row data
+        const updatedRowData = await updateParsedData(slug, newMyProbability);
+      
+        setParsedData((oldData) => {
+          const newRowData = [...oldData];
+          
+          // Update the row with the new data
+          newRowData[index] = updatedRowData;
+          
+          return newRowData;
+        });
+        // Call handleSort to sort the data after updating parsedData
+        const sorted = sortData(parsedData, "ROI", "desc");
+        setSortedData(sorted);
+
       };
 
     const handleSort = (sortBy) => {
@@ -202,6 +217,7 @@ export default function SpreadsheetForm() {
                     rows={1}
                     className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     value={apiKey}
+                    onB
                     onChange={handleAPIKeyChange}
                 ></textarea>
  

@@ -26,8 +26,15 @@ export async function placeBetBySlug(apiKey, slug, betAmount, outcomeToBuy) {
   return bet;
 }
 
+const handleErrors = (response) => {
+  if (!response.ok) {
+    throw Error(response.statusText);
+  }
+  return response;
+};
+
 export function searchMarket(searchTerm) {
-  return fetch(`https://manifold.markets/api/v0/search-markets?terms=${searchTerm}`).then(res => res.json());
+  return fetch(`https://manifold.markets/api/v0/search-markets?terms=${searchTerm}`).then(handleErrors).then(res => res.json());
 }
 
 // place bet by other things

@@ -1,17 +1,20 @@
 import { searchMarket } from '../lib/api'
 import { useState } from 'react'
 import Image from 'next/image'
+
 export default function Search({ handleSelect, selectedMarkets }) {
     const [results, setResults] = useState([])
     const [isResultsVisible, setIsResultsVisible] = useState(false);
 
     const handleSearch = async (e) => {
         const term = e.target.value
+
         try {
             const data = await searchMarket(term);
             setResults(data.slice(0, 10))
         } catch (error) {
-            alert(`error: ${error}`)
+            console.log(error)
+            setResults([])
         }
     }
 

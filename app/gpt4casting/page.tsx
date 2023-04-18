@@ -8,7 +8,7 @@ export default function Home({}){
                 <div className="h-screen flex justify-center">
                     <div className="flex flex-col">
                         <div className="relative w-full my-auto">
-                            <h1 className="text-6xl font-bold text-center py-4">GPT-4casting</h1>
+                            <h1 className="text-6xl font-bold text-center py-4">GPT-4casting (Coming soon)</h1>
                                 <GPT4castingForm />
                             <div className="w-full px-4">
                             </div>
