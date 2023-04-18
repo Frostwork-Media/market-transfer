@@ -1,6 +1,7 @@
+'use client';
 import GPT4castingForm from '../../components/GPT4castingForm';
 
-export default function Page({}){
+export default function Home({}){
     return (
         <main className=''>
             <div className="min-h-screen flex flex-col justify-center items-center">

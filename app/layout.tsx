@@ -1,4 +1,5 @@
 import './globals.css'
+import Navbar from '../components/Navbar'
 
 export const metadata = {
   title: 'Market-Transfer',
@@ -12,7 +13,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className='flex flex-col'>
+        <Navbar />
+        {children}
+      </body>
     </html>
   )
 }
