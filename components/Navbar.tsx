@@ -11,7 +11,8 @@ export default function Navbar() {
     <nav className="flex items-center justify-center space-x-8 bg-gray-100 p-6">
         {
             pages.map((page, i) => {
-                const isActive = true
+                const isActive = window.location.pathname === page.href
+                
                 return (
                     <a key={i} href={page.href} className={`capitalize ${isActive ? 'bg-blue-400 rounded-lg px-2 text-white' : ''}`}>{page.name}</a>
                 )
