@@ -20,44 +20,68 @@ const sortData = (data, sortBy, direction) => {
     });
 };
 
+const updateParsedData = async (slug, myProbability) => {
+    const response = await getMarketBySlug(columns[0]);
+    const marketProbability = parseFloat(response.probability);
+    const thingToBuy = calc.buyYes(response.probability, myProbability);
+    const marketWinChance = calc.marketWinChance(response.probability, thingToBuy);
+    const myWinChance = calc.myWinChance(myProbability, thingToBuy);
+    const marketReturn = calc.marketReturn(marketWinChance);
+    const kellyBetProportion = calc.kellyBetProportion(marketReturn, myProbability);
+    const betEVreturn = calc.betEVreturn(marketWinChance, myWinChance);
+    const betROI = calc.betROI(betEVreturn, marketWinChance);
+    const roundedProbility = Math.round(response.probability * 1000) / 10; // 3 decimal places
+    return {
+        slug: columns[0],
+        title: response.question,
+        marketP: marketProbability,
+        myP: myProbability,
+        buy: thingToBuy ? "YES" : "NO",
+        //marketWinChance: marketWinChance,
+        //myWinChance: myWinChance,
+        marketReturn: marketReturn,
+        kellyPerc: kellyBetProportion,
+        //betEVreturn: betEVreturn,
+        rOI: betROI,
+        button: "",
+        delete: ""
+    }
+}
+
 const parseSpreadsheetData = async (text) => {
     const rows = text.trim().split('\n');
     let data = [];
 
     for (let row of rows) {
         const columns = row.split('\t');
-        const response = await getMarketBySlug(columns[0]);
         const myProbability = parseFloat(columns[1]) / 100;
-        const marketProbability = parseFloat(response.probability);
-        const thingToBuy = calc.buyYes(response.probability, myProbability);
-        const marketWinChance = calc.marketWinChance(response.probability, thingToBuy);
-        const myWinChance = calc.myWinChance(myProbability, thingToBuy);
-        const marketReturn = calc.marketReturn(marketWinChance);
-        const kellyBetProportion = calc.kellyBetProportion(marketReturn, myProbability);
-        const betEVreturn = calc.betEVreturn(marketWinChance, myWinChance);
-        const betROI = calc.betROI(betEVreturn, marketWinChance);
-        const roundedProbility = Math.round(response.probability * 1000) / 10; // 3 decimal places
-        data.push({
-            slug: columns[0],
-            title: response.question,
-            marketP: marketProbability,
-            myP: myProbability,
-            buy: thingToBuy ? "YES" : "NO",
-            //marketWinChance: marketWinChance,
-            //myWinChance: myWinChance,
-            marketReturn: marketReturn,
-            kellyPerc: kellyBetProportion,
-            //betEVreturn: betEVreturn,
-            rOI: betROI,
-            button: ""
-        });
+        data.push(await updateParsedData(columns[0], myProbability));
     }
+
     sortData(data, 'betROI', 'desc')
     return data;
 }
 
 const TableHeaders = ({ data, sortFn, direction, sortBy }) => {
-    const keys = Object.keys(data[0])
+    const hasData = data && data.length > 0 && typeof data[0] === 'object';
+    const emptyTable = [   
+        {
+            slug: "",
+            title: "",
+            marketP: 0,
+            myP: 0,
+            buy: "",
+            //marketWinChance: marketWinChance,
+            //myWinChance: myWinChance,
+            marketReturn: 0,
+            kellyPerc: 0,
+            //betEVreturn: betEVreturn,
+            rOI: 0,
+            button: "",
+            delete: ""
+        }
+    ]
+    const keys = Object.keys(hasData ? data[0] : emptyTable[0]);
 
     return (
         <>
@@ -69,7 +93,7 @@ const TableHeaders = ({ data, sortFn, direction, sortBy }) => {
             })}
         </>
     )
-}
+};
 
 
 export default function SpreadsheetForm() {
@@ -78,21 +102,24 @@ export default function SpreadsheetForm() {
     const [rows, setRows] = useState([]);
     const storedRawData = typeof window !== "undefined" ? window.localStorage.getItem('raw-data') : null;
     const storedParsedData =  typeof window !== "undefined" ? JSON.parse(window?.localStorage.getItem('parsed-data')) : null;
+    const storedChosenMarkets = typeof window !== "undefined" ? JSON.parse(window?.localStorage.getItem('chosen-markets')) : null;
     const [rawData, setRawData] = useState(storedRawData || '');
+    const [chosenMarkets, setChosenMarkets] = useState(storedChosenMarkets || []);
     const [parsedData, setParsedData] = useState(storedParsedData || []);
     const [sortBy, setSortBy] = useState('rOI');
     const [sortDirection, setSortDirection] = useState('desc');
     const [sortedData, setSortedData] = useState([]);
 
     const [selectedMarkets, setSelectedMarkets] = useState([]);
+    
     const handleSelect = (market) => {
-        setSelectedMarkets((oldMarkets) => {
+        setChosenMarkets((oldMarkets) => {
             if(oldMarkets.map(m => m.id).includes(market.id)){
                 return oldMarkets.filter((m) => m !== market);
             }
             return [...oldMarkets, market];
         })
-        console.log(market)
+        console.log("Clicked market", market.question)
     } 
 
     console.log(selectedMarkets)
@@ -109,6 +136,13 @@ export default function SpreadsheetForm() {
         };
         setRows([...rows, newRow]);
     }
+
+    const handleDeleteRow = (index) => {
+        const updatedData = [...parsedData];
+        updatedData.splice(index, 1);
+        setParsedData(updatedData);
+        window?.localStorage.setItem('parsed-data', JSON.stringify(updatedData));
+    };
 
     const handleTextareaChange = (event) => {
         setRawData(event.target.value);
@@ -138,6 +172,13 @@ export default function SpreadsheetForm() {
             });
     }
 
+    const handleMyPChange = (index, value) => {
+        const newParsedData = parsedData.slice();
+        newParsedData[index].myP = parseFloat(value) / 100;
+        setParsedData(newParsedData);
+        window?.localStorage.setItem('parsed-data', JSON.stringify(newParsedData));
+      };
+
     const handleSort = (sortBy) => {
         setSortBy(sortBy);
         setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -150,9 +191,11 @@ export default function SpreadsheetForm() {
 
     return (
         <div className="w-full">
-            <SearchManifold handleSelect={handleSelect} selectedMarket={selectedMarkets} />
             <div className="my-4">
-                <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key</label>
+                <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Click entries to add them to the table:</label>
+                <SearchManifold handleSelect={handleSelect} selectedMarket={selectedMarkets} />
+
+                <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
                 <textarea
                     id="api-key"
                     name="api-key"
@@ -161,9 +204,49 @@ export default function SpreadsheetForm() {
                     value={apiKey}
                     onChange={handleAPIKeyChange}
                 ></textarea>
-            </div>
-            <div className="my-4">
-                <label htmlFor="spreadsheet-data" className="block text-sm font-medium text-gray-700">Paste Spreadsheet Data</label>
+ 
+                <LoadingButton onClick={handleParseData} className="my-4" buttonText={"Autobet 1000"} />
+                <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Bets done:</label>
+                <textarea></textarea>
+
+                <table className="w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                           <TableHeaders data={parsedData ? parsedData : emptyTable} sortFn={handleSort} direction={sortDirection} sortBy={sortBy} />
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+
+                        {sortedData.map((row, index) => (
+                            <tr key={index}>
+                                <td className="border px-4 py-2">{row.slug}</td>
+                                <td className="border px-4 py-2">{row.title}</td>
+                                <td className="border px-4 py-2">{floatToPercent(row.marketP)}</td>
+                                <td className="border px-4 py-2">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="w-full text-center"
+                                        value={row.myP * 100}
+                                        onChange={(e) => handleMyPChange(index, e.target.value)}
+                                    />
+                                </td>
+                                <td className="border px-4 py-2">{row.buy}</td>
+                                {/*<td className="border px-4 py-2">{floatToPercent(row.marketWinChance)}</td>
+                                    <td className="border px-4 py-2">{floatToPercent(row.myWinChance)}</td>*/}
+                                <td className="border px-4 py-2">{round2SF(row.marketReturn)}</td>
+                                <td className="border px-4 py-2">{round2SF(row.kellyPerc)}</td>
+                                {/*<td className="border px-4 py-2">{round2SF(row.betEVreturn)}</td>*/}
+                                <td className="border px-4 py-2">{round2SF(row.rOI)}</td>
+                                <td><LoadingButton passOnClick={() => handleBet(row.slug, row.buy, 100)} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Bet M100"} /></td>
+                                <td className="border px-4 py-2"><button onClick={() => handleDeleteRow(index)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete</button></td>
+                            </tr>
+                        ))}
+                    </tbody>
+
+                </table>
+  
+                <label htmlFor="spreadsheet-data" className="block text-sm font-medium text-gray-700">Paste Spreadsheet Data ([MM slug] then [probability in percent]) </label>
                 <textarea
                     id="spreadsheet-data"
                     name="spreadsheet-data"
@@ -172,72 +255,10 @@ export default function SpreadsheetForm() {
                     value={rawData}
                     onChange={handleTextareaChange}
                 ></textarea>
-            </div>
 
-            <div className="w-full">
-                <table className="w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                ID
-                            </th>
-                            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Name
-                            </th>
-                            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Age
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {rows.map((row) => (
-                            <tr>
-                                <TableHeaders data={parsedData} sortFn={handleSort} direction={sortDirection} sortBy={sortBy} />
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <button
-                    onClick={addRow}
-                    className="mt-4 bg-indigo-600 text-white font-bold py-2 px-4 rounded hover:bg-indigo-700"
-                >
-                    Add row
-                </button>
-            </div>
 
-            <div className="my-4">
-                <LoadingButton passOnClick={handleParseData} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Create Table"} />
-            </div>
-            {sortedData.length > 0 && (
-                <div className="my-4 overflow-scroll w-full max-w-5xl"> 
-                    <h3 className="text-xl font-semibold">Parsed Data</h3>
-                    <table className="table-auto w-full">
-                        <thead>
-                            <tr>
-                                <TableHeaders data={parsedData} sortFn={handleSort} direction={sortDirection} sortBy={sortBy} />
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {sortedData.map((row, index) => (
-                                <tr key={index}>
-                                    <td className="border px-4 py-2">{row.slug}</td>
-                                    <td className="border px-4 py-2">{row.title}</td>
-                                    <td className="border px-4 py-2">{floatToPercent(row.marketP)}</td>
-                                    <td className="border px-4 py-2">{floatToPercent(row.myP)}</td>
-                                    <td className="border px-4 py-2">{row.buy}</td>
-                                    {/*<td className="border px-4 py-2">{floatToPercent(row.marketWinChance)}</td>
-                                    <td className="border px-4 py-2">{floatToPercent(row.myWinChance)}</td>*/}
-                                    <td className="border px-4 py-2">{round2SF(row.marketReturn)}</td>
-                                    <td className="border px-4 py-2">{round2SF(row.kellyPerc)}</td>
-                                    {/*<td className="border px-4 py-2">{round2SF(row.betEVreturn)}</td>*/}
-                                    <td className="border px-4 py-2">{round2SF(row.rOI)}</td>
-                                    <LoadingButton passOnClick={() => handleBet(row.slug, row.buy, 100)} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Bet M100"}/>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+                <LoadingButton passOnClick={handleParseData} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Add spreadsheet data to table"} />
+        </div>
         </div>
     );
 }

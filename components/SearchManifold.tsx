@@ -8,9 +8,8 @@ export default function Search({ handleSelect, selectedMarkets }) {
     const handleSearch = async (e) => {
         const term = e.target.value
         try {
-            const results = await searchMarket(term)
-            console.log(results)
-            setResults(results.slice(0, 10))
+            const data = await searchMarket(term);
+            setResults(data.slice(0, 10))
         } catch (error) {
             alert(`error: ${error}`)
         }
@@ -25,7 +24,7 @@ export default function Search({ handleSelect, selectedMarkets }) {
                         return (
                             <li key={index} >{
                                 <>
-                                    <p className='truncate cursor-pointer' onClick={() => handleSelect(result)}>Question: {result.question}</p>
+                                    <p className='truncate cursor-pointer' onClick={() => handleSelect(result)}>{result.question}</p>
                                 </>
                             }</li>
                         )
