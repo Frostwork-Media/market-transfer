@@ -3,25 +3,33 @@
 import React, { useEffect, useState } from 'react';
 import { getMarketBySlug, placeBetBySlug } from '@/lib/api';
 import * as calc from '../lib/probabilityCalculations';
-import { floatToPercent, round2SF} from '@/lib/utils';
+import { floatToPercent, round2SF, extractSlugFromURL} from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import SearchManifold from './SearchManifold';
 
 
 const sortData = (data, sortBy, direction) => {
-    return data.sort((a, b) => {
-        if(typeof a[sortBy] === 'string')
-            return direction === 'asc' ? a[sortBy].localeCompare(b[sortBy]) : b[sortBy].localeCompare(a[sortBy]);
-        
-        if(typeof a[sortBy] === 'number')
-            return direction === 'asc' ? a[sortBy] - b[sortBy] : b[sortBy] - a[sortBy];
-        
-        return 0;
-    });
-};
+    try{
+        return data.sort((a, b) => {
+            if(typeof a[sortBy] === 'string')
+                return direction === 'asc' ? a[sortBy].localeCompare(b[sortBy]) : b[sortBy].localeCompare(a[sortBy]);
+            
+            if(typeof a[sortBy] === 'number')
+                return direction === 'asc' ? a[sortBy] - b[sortBy] : b[sortBy] - a[sortBy];
+            
+            return 0;
+        });
+    } catch (error) {
+        console.log(error)
+        console.log(data, sortBy, direction)
+        alert('Error sorting data. Probably that there wasn\'t any data to sort.');
+    }
+    }
+
 
 const updateParsedData = async (slug, myProbability) => {
     const response = await getMarketBySlug(slug);
+    console.log("Market", response);
     const marketProbability = parseFloat(response.probability);
     const thingToBuy = calc.buyYes(response.probability, myProbability);
     const marketWinChance = calc.marketWinChance(response.probability, thingToBuy);
@@ -57,8 +65,8 @@ const parseSpreadsheetData = async (text) => {
         const myProbability = parseFloat(columns[1]) / 100;
         data.push(await updateParsedData(columns[0], myProbability));
     }
-
-    sortData(data, 'betROI', 'desc')
+    console.log(data);
+    sortData(data, 'betROI', 'desc');
     return data;
 }
 
@@ -111,18 +119,19 @@ export default function SpreadsheetForm() {
     const [sortedData, setSortedData] = useState([]);
 
     const [selectedMarkets, setSelectedMarkets] = useState([]);
-    
-    const handleSelect = (market) => {
-        setChosenMarkets((oldMarkets) => {
-            if(oldMarkets.map(m => m.id).includes(market.id)){
-                return oldMarkets.filter((m) => m !== market);
-            }
-            return [...oldMarkets, market];
-        })
-        console.log("Clicked market", market.question)
-    } 
 
-    console.log(selectedMarkets)
+    const handleSelect = async (market) => {
+        console.log("Selected market", market.url);
+        if (parsedData.map((m) => m.slug).includes(extractSlugFromURL(market.url))) {
+            console.log("Already added this market", market)
+        } else {
+            console.log("Adding this market", market)
+            const updatedData = [await updateParsedData(extractSlugFromURL(market.url), 0), ...parsedData];
+            console.log("Updating parsed data", extractSlugFromURL(market.url), 0);
+            setParsedData(updatedData);
+        }
+    }; 
+
 
     const handleAPIKeyChange = (event) => {
         setApiKey(event.target.value);
@@ -179,7 +188,7 @@ export default function SpreadsheetForm() {
       
         // Call the updateParsedData function to get the updated row data
         const updatedRowData = await updateParsedData(slug, newMyProbability);
-      
+       
         setParsedData((oldData) => {
           const newRowData = [...oldData];
           
@@ -199,7 +208,7 @@ export default function SpreadsheetForm() {
         setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     };
 
-    useEffect(() => {
+    useEffect(() =>{
         const sorted = sortData(parsedData, sortBy, sortDirection);
         setSortedData(sorted);
     }, [parsedData, sortBy, sortDirection])
@@ -209,18 +218,15 @@ export default function SpreadsheetForm() {
             <div className="my-4">
                 <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Click entries to add them to the table:</label>
                 <SearchManifold handleSelect={handleSelect} selectedMarket={selectedMarkets} />
-
                 <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
-                <textarea
+                <input
                     id="api-key"
                     name="api-key"
-                    rows={1}
+                    type="password"
                     className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     value={apiKey}
-                    onB
                     onChange={handleAPIKeyChange}
-                ></textarea>
- 
+                />
                 <LoadingButton onClick={handleParseData} className="my-4" buttonText={"Autobet 1000"} />
                 <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Bets done:</label>
                 <textarea></textarea>
@@ -228,7 +234,7 @@ export default function SpreadsheetForm() {
                 <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                           <TableHeaders data={parsedData ? parsedData : emptyTable} sortFn={handleSort} direction={sortDirection} sortBy={sortBy} />
+                           <TableHeaders data={parsedData} sortFn={handleSort} direction={sortDirection} sortBy={sortBy} />
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">

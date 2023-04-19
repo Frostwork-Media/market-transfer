@@ -17,3 +17,8 @@ export function floatToPercent(f: number): string {
 export function round2SF(f: number): number {
   return Math.round(f * 100) / 100;
 }
+
+export function extractSlugFromURL(url) {
+  const parts = url.split("/");
+  return parts[parts.length - 1];
+}
