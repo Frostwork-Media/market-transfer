@@ -14,10 +14,10 @@ export default function Search({ handleSelect, selectedMarkets }) {
             const data = await searchMarket(search);
             setResults(data.slice(0, 10))
         } catch (error) {
-            console.log(error)
-            setResults([])
+            console.log(error);
+            setResults([]);
         }
-    }
+    };
 
     const handleChange = (e) => {
         setSearchTerm(e.target.value)
@@ -31,6 +31,13 @@ export default function Search({ handleSelect, selectedMarkets }) {
         }
     }, [debouncedValue])
 
+    const handleBlur = () => {
+        // Check if the input element is focused before hiding the results
+        if (!inputRef.current || !inputRef.current.contains(document.activeElement)) {
+            setIsResultsVisible(false);
+        }
+    };
+
     return (
         <>
             <div className="relative">
@@ -38,14 +45,12 @@ export default function Search({ handleSelect, selectedMarkets }) {
                 <ul className={`w-full bg-white bg-opacity-100 text-black absolute max-w-5xl text-xs max-h-96 overflow-scroll space-y-2  ${isResultsVisible ? 'block' : 'hidden'}`}>
                     {results.map((result, index) => {
                         return (
-                            <li key={index} >{
-                                <>
-                                    <p className='truncate cursor-pointer' onClick={() => handleSelect(result)}>{result.question}</p>
-                                </>
-                            }</li>
+                            <li key={index}>
+                                <p className='truncate cursor-pointer' onClick={() => handleSelect(result)}>{result.question}</p>
+                            </li>
                         )
-                })}
-            </ul>
+                    })}
+                </ul>
             </div>
         </>
     )
