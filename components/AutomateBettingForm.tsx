@@ -6,6 +6,7 @@ import * as calc from '../lib/probabilityCalculations';
 import { floatToPercent, round2SF, extractSlugFromURL} from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import SearchManifold from './SearchManifold';
+import useDebounce from '../lib/hooks/useDebounce'
 
 
 const sortData = (data, sortBy, direction) => {
@@ -118,6 +119,11 @@ export default function SpreadsheetForm() {
     const [sortDirection, setSortDirection] = useState('desc');
     const [sortedData, setSortedData] = useState([]);
 
+    const [formData, setFormData] = useState({
+        chosenMarkets: [],
+        rawData: '',
+    })
+
     const [selectedMarkets, setSelectedMarkets] = useState([]);
 
     const handleSelect = async (market) => {
@@ -132,19 +138,9 @@ export default function SpreadsheetForm() {
         }
     }; 
 
-
     const handleAPIKeyChange = (event) => {
         setApiKey(event.target.value);
     };
-
-    function addRow() {
-        const newRow = {
-          id: rows.length + 1,
-          name: `New row ${rows.length + 1}`,
-          age: Math.floor(Math.random() * 100),
-        };
-        setRows([...rows, newRow]);
-    }
 
     const handleDeleteRow = (index) => {
         const updatedData = [...parsedData];

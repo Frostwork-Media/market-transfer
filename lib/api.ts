@@ -34,7 +34,18 @@ const handleErrors = (response) => {
 };
 
 export function searchMarket(searchTerm) {
-  return fetch(`https://manifold.markets/api/v0/search-markets?terms=${searchTerm}`).then(handleErrors).then(res => res.json());
+  // Split search terms by space and filter out any empty strings
+  const searchTerms = searchTerm.split(' ').filter(term => term.trim() !== '');
+
+  // Check if there are multiple search terms
+  const isMultipleTerms = searchTerms.length > 1;
+
+  // Use 'term' for single term and 'terms' for multiple terms
+  const queryParamKey = isMultipleTerms ? 'terms' : 'term';
+
+  return fetch(`https://manifold.markets/api/v0/search-markets?${queryParamKey}=${searchTerm}`)
+    .then(handleErrors)
+    .then(res => res.json());
 }
 
 // place bet by other things

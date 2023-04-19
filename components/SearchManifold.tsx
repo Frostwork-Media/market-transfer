@@ -1,26 +1,17 @@
 import { searchMarket } from '../lib/api'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import useDebounce from '../lib/hooks/useDebounce'
 import Image from 'next/image'
 
 export default function Search({ handleSelect, selectedMarkets }) {
     const [results, setResults] = useState([])
     const [isResultsVisible, setIsResultsVisible] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const debouncedValue = useDebounce(searchTerm, 300);
 
-    const debounce = (func, wait) => {
-        let timeout;
-    
-        return function (...args) {
-            const context = this;
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(context, args), wait);
-        };
-    };
-
-    const handleSearch = async (e) => {
-        const term = e.target.value
-
+    const handleSearch = async (search) => {
         try {
-            const data = await searchMarket(term);
+            const data = await searchMarket(search);
             setResults(data.slice(0, 10))
         } catch (error) {
             console.log(error)
@@ -28,12 +19,22 @@ export default function Search({ handleSelect, selectedMarkets }) {
         }
     }
 
-    const debouncedHandleSearch = debounce(handleSearch, 300); // Adjust the wait time (300ms) as needed
+    const handleChange = (e) => {
+        setSearchTerm(e.target.value)
+    }
+
+    useEffect(() => {
+        if (debouncedValue) {
+            handleSearch(debouncedValue)
+        } else {
+            setResults([])
+        }
+    }, [debouncedValue])
 
     return (
         <>
             <div className="relative">
-            <input className='w-full border p-2' type="text" placeholder="Search" onChange={(e) => debouncedHandleSearch(e)}  onFocus={() => setIsResultsVisible(true)} onBlur={() => setTimeout(() => setIsResultsVisible(false), 200)} />
+            <input className='w-full border p-2' type="text" placeholder="Search" onChange={handleChange}  onFocus={() => setIsResultsVisible(true)} onBlur={() => setTimeout(() => setIsResultsVisible(false), 200)} />
                 <ul className={`w-full bg-white bg-opacity-100 text-black absolute max-w-5xl text-xs max-h-96 overflow-scroll space-y-2  ${isResultsVisible ? 'block' : 'hidden'}`}>
                     {results.map((result, index) => {
                         return (
