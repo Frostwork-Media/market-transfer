@@ -27,8 +27,7 @@ const sortData = (data, sortBy, direction) => {
     }
     }
 
-
-const updateParsedData = async (slug, myProbability) => {
+const processData = async (slug, myProbability) => {
     const response = await getMarketBySlug(slug);
     console.log("Market", response);
     const marketProbability = parseFloat(response.probability);
@@ -109,29 +108,124 @@ export default function SpreadsheetForm() {
     const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || '');
     
     // local storage
-    const storedRawData = typeof window !== "undefined" ? window.localStorage.getItem('raw-data') : null;
+    const storedUserData = typeof window !== "undefined" ? window.localStorage.getItem('raw-data') : null;
     const storedParsedData =  typeof window !== "undefined" ? JSON.parse(window?.localStorage.getItem('parsed-data')) : null;
     const storedChosenMarkets = typeof window !== "undefined" ? JSON.parse(window?.localStorage.getItem('chosen-markets')) : null;
     
     // data
-    const [rawData, setRawData] = useState(storedRawData || '');
-    const [parsedData, setParsedData] = useState(storedParsedData || []);
+    type userDataType = {
+        slug: string,
+        myProbability: number
+    }; // array of probability
+    const [userData, setUserData] = useState<userDataType[]>([]);
 
-    // selected markets
-    const [chosenMarkets, setChosenMarkets] = useState(storedChosenMarkets || []);
+    type processedDataType = {
+        slug: string,
+        title: string,
+        marketP: number,
+        myP: number,
+        buy: string,
+        marketReturn: number,
+        kellyPerc: number,
+        rOI: number,
+    }; // array of probability
+    const [processedData, setProcessedData] = useState<processedDataType[]>(storedParsedData || []);
+
+    const processData = async ({ slug, myProbability }: userDataType): Promise<processedDataType> => {
+        const response = await getMarketBySlug(slug);
+        console.log("Market", response);
+        const marketProbability = parseFloat(response.probability);
+        const thingToBuy = calc.buyYes(response.probability, myProbability);
+        const marketWinChance = calc.marketWinChance(response.probability, thingToBuy);
+        const myWinChance = calc.myWinChance(myProbability, thingToBuy);
+        const marketReturn = calc.marketReturn(marketWinChance);
+        const kellyBetProportion = calc.kellyBetProportion(marketReturn, myProbability);
+        const betEVreturn = calc.betEVreturn(marketWinChance, myWinChance);
+        const betROI = calc.betROI(betEVreturn, marketWinChance);
+        const roundedProbility = Math.round(response.probability * 1000) / 10; // 3 decimal places
+
+        return {
+            slug: slug,
+            title: response.question,
+            marketP: marketProbability,
+            myP: myProbability,
+            buy: thingToBuy ? "YES" : "NO",
+            marketReturn: marketReturn,
+            kellyPerc: kellyBetProportion,
+            rOI: betROI,
+        }
+    }
+    
+    // processed data handler
+    useEffect(() => {
+        //compare the current user data with the stored user data
+        //if they are different, process the data for each row
+        if(!userData) return;
+        //if they are the same, do nothing
+        const oldData = processedData?.map((row): userDataType => ({slug: row.slug, myProbability: row.myP}));
+
+        // additions and updates including changes to my probability
+        const addedData = userData.filter((row) => {
+            const isAdded = !oldData.map((oldRow) => oldRow.slug).includes(row.slug);
+            if (isAdded) return true;
+
+            return false
+        }); 
+
+        // updates
+        const updatedData = userData.filter((row) => {
+            const oldMatchingRow = oldData.find((oldMatchingRow) => oldMatchingRow.slug === row.slug);
+            const probabilityChanged = oldMatchingRow.myProbability !== row.myProbability;
+            if (probabilityChanged) return true;
+
+            return false
+        });
+
+        // removals
+        const removedData = oldData?.filter((row) => !userData.map((row) => row.slug).includes(row.slug));
+
+        setProcessedData((oldData): processedDataType[] => {
+            // remove rows
+            let newData = oldData.filter((row) => {
+                !removedData.map((removeRow) => removeRow.slug).includes(row.slug)
+                
+            });
+            
+            // add rows
+            for (const row of addedData) {
+                processData(row).then(data => {
+                    newData.push(data);
+                })
+                console.log("Added row", row.slug)
+            }
+
+            // update rows
+            for (const row of updatedData) {
+                processData(row).then((data) => {
+                    newData.push(data)
+                })
+            }
+            
+            return newData
+        })
+
+        //resort
+    }, [userData])
+
 
     // sort state
     const [sortBy, setSortBy] = useState('rOI');
     const [sortDirection, setSortDirection] = useState('desc');
     const [sortedData, setSortedData] = useState([]);
 
+    // passes selected markets to the search manifold component
     const [selectedMarkets, setSelectedMarkets] = useState([]);
 
-    const handleSelect = async (market) => {
-        if (parsedData.map((m) => m.slug).includes(extractSlugFromURL(market.url))) {
-        } else {
-            const updatedData = [await updateParsedData(extractSlugFromURL(market.url), 0), ...parsedData];
-            setParsedData(updatedData);
+
+    const handleSearchSelect = async (market) => {
+        if (!processedData.map((m) => m.slug).includes(extractSlugFromURL(market.url))) {
+            const updatedData = [await updateProcessedData(extractSlugFromURL(market.url), 0), ...processedData];
+            setProcessedData(updatedData);
         }
     }; 
 
@@ -140,22 +234,22 @@ export default function SpreadsheetForm() {
     };
 
     const handleDeleteRow = (index) => {
-        const updatedData = [...parsedData];
+        const updatedData = [...processedData];
         updatedData.splice(index, 1);
-        setParsedData(updatedData);
-        window?.localStorage.setItem('parsed-data', JSON.stringify(updatedData));
+        setProcessedData(updatedData);
+        window?.localStorage.setItem('Processed-data', JSON.stringify(updatedData));
     };
 
     const handleTextareaChange = (event) => {
-        setRawData(event.target.value);
+        setUserData(event.target.value);
         window?.localStorage.setItem('raw-data', event.target.value)
     };
 
-    const handleParseData = async () => {
+    const handleProcessedData = async () => {
         try {
-            const data = await parseSpreadsheetData(rawData);
-            setParsedData(data);
-            window?.localStorage.setItem('parsed-data', JSON.stringify(data))
+            const data = await parseSpreadsheetData(userData);
+            setProcessedData(data);
+            window?.localStorage.setItem('Processed-data', JSON.stringify(data))
         } catch (error) {
             console.log(error)
             alert('Error parsing the pasted data. Please ensure it is in the correct format.');
@@ -177,12 +271,12 @@ export default function SpreadsheetForm() {
     const handleMyPChange = async (index, value) => {
         // Convert percentage value back to a float between 0 and 1
         const newMyProbability = parseFloat(value) / 100;
-        const slug = parsedData[index].slug;
+        const slug = processedData[index].slug;
       
-        // Call the updateParsedData function to get the updated row data
-        const updatedRowData = await updateParsedData(slug, newMyProbability);
+        // Call the updateProcessedData function to get the updated row data
+        const updatedRowData = await updateProcessedData(slug, newMyProbability);
        
-        setParsedData((oldData) => {
+        setProcessedData((oldData) => {
           const newRowData = [...oldData];
           
           // Update the row with the new data
@@ -190,8 +284,8 @@ export default function SpreadsheetForm() {
           
           return newRowData;
         });
-        // Call handleSort to sort the data after updating parsedData
-        const sorted = sortData(parsedData, "ROI", "desc");
+        // Call handleSort to sort the data after updating processedData
+        const sorted = sortData(processedData, "ROI", "desc");
         setSortedData(sorted);
 
       };
@@ -202,15 +296,15 @@ export default function SpreadsheetForm() {
     };
 
     useEffect(() =>{
-        const sorted = sortData(parsedData, sortBy, sortDirection);
+        const sorted = sortData(processedData, sortBy, sortDirection);
         setSortedData(sorted);
-    }, [parsedData, sortBy, sortDirection])
+    }, [processedData, sortBy, sortDirection])
 
     return (
         <div className="w-full">
             <div className="my-4">
                 <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Click entries to add them to the table:</label>
-                <SearchManifold handleSelect={handleSelect} selectedMarkets={selectedMarkets} />
+                <SearchManifold handleSelect={handleSearchSelect} selectedMarkets={selectedMarkets} />
                 <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
                 <input
                     id="api-key"
@@ -220,14 +314,14 @@ export default function SpreadsheetForm() {
                     value={apiKey}
                     onChange={handleAPIKeyChange}
                 />
-                <LoadingButton onClick={handleParseData} className="my-4" buttonText={"Autobet 1000"} />
+                <LoadingButton onClick={handleProcessedData} className="my-4" buttonText={"Autobet 1000"} />
                 <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Bets done:</label>
                 <textarea></textarea>
 
                 <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                           <TableHeaders data={parsedData} sortFn={handleSort} direction={sortDirection} sortBy={sortBy} />
+                           <TableHeaders data={processedData} sortFn={handleSort} direction={sortDirection} sortBy={sortBy} />
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -272,7 +366,7 @@ export default function SpreadsheetForm() {
                 ></textarea>
 
 
-                <LoadingButton passOnClick={handleParseData} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Add spreadsheet data to table"} />
+                <LoadingButton passOnClick={handleProcessedata} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Add spreadsheet data to table"} />
         </div>
         </div>
     );
