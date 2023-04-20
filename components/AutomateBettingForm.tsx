@@ -27,15 +27,15 @@ const sortData = (data, sortBy, direction) => {
     }
     }
 
-const processData = async (slug, myProbability) => {
+const processData = async (slug, userProbability) => {
     const response = await getMarketBySlug(slug);
     console.log("Market", response);
     const marketProbability = parseFloat(response.probability);
-    const thingToBuy = calc.buyYes(response.probability, myProbability);
+    const thingToBuy = calc.buyYes(response.probability, userProbability);
     const marketWinChance = calc.marketWinChance(response.probability, thingToBuy);
-    const myWinChance = calc.myWinChance(myProbability, thingToBuy);
+    const myWinChance = calc.myWinChance(userProbability, thingToBuy);
     const marketReturn = calc.marketReturn(marketWinChance);
-    const kellyBetProportion = calc.kellyBetProportion(marketReturn, myProbability);
+    const kellyBetProportion = calc.kellyBetProportion(marketReturn, userProbability);
     const betEVreturn = calc.betEVreturn(marketWinChance, myWinChance);
     const betROI = calc.betROI(betEVreturn, marketWinChance);
     const roundedProbility = Math.round(response.probability * 1000) / 10; // 3 decimal places
@@ -43,7 +43,7 @@ const processData = async (slug, myProbability) => {
         slug: slug,
         title: response.question,
         marketP: marketProbability,
-        myP: myProbability,
+        myP: userProbability,
         buy: thingToBuy ? "YES" : "NO",
         //marketWinChance: marketWinChance,
         //myWinChance: myWinChance,
@@ -62,8 +62,8 @@ const parseSpreadsheetData = async (text) => {
 
     for (let row of rows) {
         const columns = row.split('\t');
-        const myProbability = parseFloat(columns[1]) / 100;
-        data.push(await updateParsedData(columns[0], myProbability));
+        const userProbability = parseFloat(columns[1]) / 100;
+        data.push(await updateParsedData(columns[0], userProbability));
     }
     console.log(data);
     sortData(data, 'betROI', 'desc');
@@ -115,7 +115,7 @@ export default function SpreadsheetForm() {
     // data
     type userDataType = {
         slug: string,
-        myProbability: number
+        userProbability: number
     }; // array of probability
     const [userData, setUserData] = useState<userDataType[]>([]);
 
@@ -131,15 +131,16 @@ export default function SpreadsheetForm() {
     }; // array of probability
     const [processedData, setProcessedData] = useState<processedDataType[]>(storedParsedData || []);
 
-    const processData = async ({ slug, myProbability }: userDataType): Promise<processedDataType> => {
+    const processData = async ({ slug, userProbability }: userDataType): Promise<processedDataType> => {
+        console.log("Processing data for", slug, userProbability);
         const response = await getMarketBySlug(slug);
         console.log("Market", response);
         const marketProbability = parseFloat(response.probability);
-        const thingToBuy = calc.buyYes(response.probability, myProbability);
+        const thingToBuy = calc.buyYes(response.probability, userProbability);
         const marketWinChance = calc.marketWinChance(response.probability, thingToBuy);
-        const myWinChance = calc.myWinChance(myProbability, thingToBuy);
+        const myWinChance = calc.myWinChance(userProbability, thingToBuy);
         const marketReturn = calc.marketReturn(marketWinChance);
-        const kellyBetProportion = calc.kellyBetProportion(marketReturn, myProbability);
+        const kellyBetProportion = calc.kellyBetProportion(marketReturn, userProbability);
         const betEVreturn = calc.betEVreturn(marketWinChance, myWinChance);
         const betROI = calc.betROI(betEVreturn, marketWinChance);
         const roundedProbility = Math.round(response.probability * 1000) / 10; // 3 decimal places
@@ -148,7 +149,7 @@ export default function SpreadsheetForm() {
             slug: slug,
             title: response.question,
             marketP: marketProbability,
-            myP: myProbability,
+            myP: userProbability,
             buy: thingToBuy ? "YES" : "NO",
             marketReturn: marketReturn,
             kellyPerc: kellyBetProportion,
@@ -162,7 +163,7 @@ export default function SpreadsheetForm() {
         //if they are different, process the data for each row
         if(!userData) return;
         //if they are the same, do nothing
-        const oldData = processedData?.map((row): userDataType => ({slug: row.slug, myProbability: row.myP}));
+        const oldData = processedData?.map((row): userDataType => ({slug: row.slug, userProbability: row.myP}));
 
         // additions and updates including changes to my probability
         const addedData = userData.filter((row) => {
@@ -174,11 +175,13 @@ export default function SpreadsheetForm() {
 
         // updates
         const updatedData = userData.filter((row) => {
-            const oldMatchingRow = oldData.find((oldMatchingRow) => oldMatchingRow.slug === row.slug);
-            const probabilityChanged = oldMatchingRow.myProbability !== row.myProbability;
+            const oldMatchingRow = oldData.find((oldRow) => oldRow.slug === row.slug);
+            if (!oldMatchingRow) return false;
+        
+            const probabilityChanged = oldMatchingRow.userProbability !== row.userProbability;
             if (probabilityChanged) return true;
-
-            return false
+        
+            return false;
         });
 
         // removals
@@ -186,12 +189,11 @@ export default function SpreadsheetForm() {
 
         setProcessedData((oldData): processedDataType[] => {
             // remove rows
-            let newData = oldData.filter((row) => {
-                !removedData.map((removeRow) => removeRow.slug).includes(row.slug)
-                
-            });
+            console.log("Rows to remove (happens in a filter)", removedData);
+            let newData = oldData.filter((row) => !removedData.map((removeRow) => removeRow.slug).includes(row.slug));
             
             // add rows
+            console.log("Rows to add (happens in a map)", addedData);
             for (const row of addedData) {
                 processData(row).then(data => {
                     newData.push(data);
@@ -199,19 +201,19 @@ export default function SpreadsheetForm() {
                 console.log("Added row", row.slug)
             }
 
-            // update rows
+            // update row
             for (const row of updatedData) {
                 processData(row).then((data) => {
                     newData.push(data)
                 })
             }
-            
-            return newData
+             
+            const sortedNewData = sortData(newData, "ROI", "desc")
+
+            return sortedNewData;
         })
 
-        //resort
     }, [userData])
-
 
     // sort state
     const [sortBy, setSortBy] = useState('rOI');
@@ -224,8 +226,13 @@ export default function SpreadsheetForm() {
 
     const handleSearchSelect = async (market) => {
         if (!processedData.map((m) => m.slug).includes(extractSlugFromURL(market.url))) {
-            const updatedData = [await updateProcessedData(extractSlugFromURL(market.url), 0), ...processedData];
-            setProcessedData(updatedData);
+            const updatedUserData =
+                [{
+                    slug: extractSlugFromURL(market.url),
+                    userProbability: market.probability
+                }
+                    , ...userData];
+            setUserData(updatedUserData);
         }
     }; 
 
@@ -270,11 +277,11 @@ export default function SpreadsheetForm() {
 
     const handleMyPChange = async (index, value) => {
         // Convert percentage value back to a float between 0 and 1
-        const newMyProbability = parseFloat(value) / 100;
+        const newuserProbability = parseFloat(value) / 100;
         const slug = processedData[index].slug;
       
         // Call the updateProcessedData function to get the updated row data
-        const updatedRowData = await updateProcessedData(slug, newMyProbability);
+        const updatedRowData = await updateProcessedData(slug, newuserProbability);
        
         setProcessedData((oldData) => {
           const newRowData = [...oldData];
@@ -326,7 +333,7 @@ export default function SpreadsheetForm() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
 
-                        {sortedData.map((row, index) => (
+                        {processedData.map((row, index) => (
                             <tr key={index}>
                                 <td className="border px-4 py-2">{row.slug}</td>
                                 <td className="border px-4 py-2">{row.title}</td>
@@ -355,7 +362,7 @@ export default function SpreadsheetForm() {
 
                 </table>
   
-                <label htmlFor="spreadsheet-data" className="block text-sm font-medium text-gray-700">Paste Spreadsheet Data ([MM slug] then [probability in percent]) </label>
+                {/* <label htmlFor="spreadsheet-data" className="block text-sm font-medium text-gray-700">Paste Spreadsheet Data ([MM slug] then [probability in percent]) </label>
                 <textarea
                     id="spreadsheet-data"
                     name="spreadsheet-data"
@@ -363,10 +370,10 @@ export default function SpreadsheetForm() {
                     className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     value={rawData}
                     onChange={handleTextareaChange}
-                ></textarea>
+                ></textarea> */}
 
 
-                <LoadingButton passOnClick={handleProcessedata} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Add spreadsheet data to table"} />
+                {/* <LoadingButton passOnClick={handleProcessedata} classNames="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" buttonText={"Add spreadsheet data to table"} /> */}
         </div>
         </div>
     );
