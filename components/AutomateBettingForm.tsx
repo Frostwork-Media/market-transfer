@@ -107,33 +107,30 @@ const TableHeaders = ({ data, sortFn, direction, sortBy }) => {
 
 export default function SpreadsheetForm() {
     const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || '');
-    function MyTable() {}
-    const [rows, setRows] = useState([]);
+    
+    // local storage
     const storedRawData = typeof window !== "undefined" ? window.localStorage.getItem('raw-data') : null;
     const storedParsedData =  typeof window !== "undefined" ? JSON.parse(window?.localStorage.getItem('parsed-data')) : null;
     const storedChosenMarkets = typeof window !== "undefined" ? JSON.parse(window?.localStorage.getItem('chosen-markets')) : null;
+    
+    // data
     const [rawData, setRawData] = useState(storedRawData || '');
-    const [chosenMarkets, setChosenMarkets] = useState(storedChosenMarkets || []);
     const [parsedData, setParsedData] = useState(storedParsedData || []);
+
+    // selected markets
+    const [chosenMarkets, setChosenMarkets] = useState(storedChosenMarkets || []);
+
+    // sort state
     const [sortBy, setSortBy] = useState('rOI');
     const [sortDirection, setSortDirection] = useState('desc');
     const [sortedData, setSortedData] = useState([]);
 
-    const [formData, setFormData] = useState({
-        chosenMarkets: [],
-        rawData: '',
-    })
-
     const [selectedMarkets, setSelectedMarkets] = useState([]);
 
     const handleSelect = async (market) => {
-        console.log("Selected market", market.url);
         if (parsedData.map((m) => m.slug).includes(extractSlugFromURL(market.url))) {
-            console.log("Already added this market", market)
         } else {
-            console.log("Adding this market", market)
             const updatedData = [await updateParsedData(extractSlugFromURL(market.url), 0), ...parsedData];
-            console.log("Updating parsed data", extractSlugFromURL(market.url), 0);
             setParsedData(updatedData);
         }
     }; 
@@ -213,7 +210,7 @@ export default function SpreadsheetForm() {
         <div className="w-full">
             <div className="my-4">
                 <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Click entries to add them to the table:</label>
-                <SearchManifold handleSelect={handleSelect} selectedMarket={selectedMarkets} />
+                <SearchManifold handleSelect={handleSelect} selectedMarkets={selectedMarkets} />
                 <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
                 <input
                     id="api-key"
