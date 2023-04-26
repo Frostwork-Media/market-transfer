@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import useDebounce from '../lib/hooks/useDebounce'
 import Image from 'next/image'
 
-export default function Search({ handleSelect, selectedMarkets }) {
+export default function Search({ handleSelect }) {
     const [results, setResults] = useState([])
     const [isResultsVisible, setIsResultsVisible] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -12,12 +12,13 @@ export default function Search({ handleSelect, selectedMarkets }) {
     const handleSearch = async (search) => {
         try {
             const data = await searchMarket(search);
-            setResults(data.slice(0, 10))
+            const unresolvedMarkets = data.filter(market => !market.isResolved);
+            setResults(unresolvedMarkets.slice(0, 10));
         } catch (error) {
-            console.log(error)
-            setResults([])
+            console.log(error);
+            setResults([]);
         }
-    }
+    };
 
     const handleChange = (e) => {
         setSearchTerm(e.target.value)

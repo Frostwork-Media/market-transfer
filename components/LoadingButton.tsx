@@ -3,7 +3,7 @@ import { useState } from 'react';
 //feels like there is something I have do with promises here?
 
 
-export default function LoadingButton({passOnClick, classNames, buttonText}) {
+export default function LoadingButton({passOnClick, buttonText}) {
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleButtonClick() {
@@ -17,7 +17,7 @@ export default function LoadingButton({passOnClick, classNames, buttonText}) {
 
   return <button
     onClick={handleButtonClick}
-    className={`${classNames} hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isLoading ? "cursor-not-allowed" : ""
+    className={`bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isLoading ? "cursor-not-allowed" : ""
       }`}
     disabled={isLoading}
   >
