@@ -81,26 +81,27 @@ export default function SpreadsheetForm() {
 
     };
 
-    const addBetsDoneData = (slug, outcomeToBuy, amountToPay) => {
+    const addBetsDoneData = async (slug, outcomeToBuy, amountToPay) => {
         const nextRow = {
             slug: slug,
             outcomeToBuy: outcomeToBuy,
             amountToPay: amountToPay,
         }
-        setBetsDoneData([...betsDoneData, nextRow]);
+        console.log("Adding row to bets done data", nextRow);
+        setBetsDoneData(prevBetsDoneData => [...prevBetsDoneData, nextRow]);
+        console.log("Bets done data", betsDoneData);
     }
 
     const autobet = async (amount) => {
         console.log("Autobetting", amount);
-        let localBetsDoneData = [...betsDoneData];
         for (let i = 0; i < amount; i = i + 100) {
             console.log("Bet at", i);
 
             await placeBetBySlug(apiKey, processedData[0].slug, 100, processedData[0].buy)
-                .then(() => {
-                    addBetsDoneData(processedData[0].slug, processedData[0].buy, 100);
+                .then(async () => {
+                    await addBetsDoneData(processedData[0].slug, processedData[0].buy, 100);
                     console.log("Bet placed successfully on ", processedData[0].slug, 100, processedData[0].buy);
-                    refreshColumnAfterBet(processedData[0].slug);
+                    await refreshColumnAfterBet(processedData[0].slug);
                 })
                 .catch((error) => {
                     console.log(error)
@@ -259,8 +260,11 @@ export default function SpreadsheetForm() {
 
     const handleAPIKeyChange = (event) => {
         setApiKey(event.target.value);
-        window?.localStorage.setItem('api-key', apiKey);
-    }
+    };
+
+    useEffect(() => {
+        window.localStorage.setItem('api-key', apiKey);
+    }, [apiKey]);
 
     return (
         <div className="w-full">
