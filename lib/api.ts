@@ -20,10 +20,13 @@ export function placeBet(apiKey, marketID, betAmount, outcomeToBuy){
 // place bet specifically by slug
 
 export async function placeBetBySlug(apiKey, slug, betAmount, outcomeToBuy) {
-  const marketID = await getIDBySlug(slug);
-  console.log(`marketID is ${marketID}`);
-  const bet = await placeBet(apiKey, marketID, betAmount, outcomeToBuy);
-  return bet;
+  try {
+    const marketID = await getIDBySlug(slug);
+    console.log(`Placing bet with on market ${marketID}`);
+    await placeBet(apiKey, marketID, betAmount, outcomeToBuy);
+  } catch (error) {
+    console.error('Error placing bet:', error);
+  }
 }
 
 const handleErrors = (response) => {

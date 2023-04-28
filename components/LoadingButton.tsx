@@ -17,7 +17,7 @@ export default function LoadingButton({passOnClick, buttonText}) {
 
   return <button
     onClick={handleButtonClick}
-    className={`bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isLoading ? "cursor-not-allowed" : ""
+    className={`mx-4 my-2 bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isLoading ? "cursor-not-allowed" : ""
       }`}
     disabled={isLoading}
   >

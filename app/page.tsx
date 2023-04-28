@@ -10,6 +10,7 @@ export default function Page({}){
                             <h1 className="text-6xl font-bold text-center py-4">Automate Betting</h1>
                             <h2 className="text-2xl font-bold text-center py-4">Automate your manifold bets according to your true probabilities to maximise profit under kelly</h2>
                             <div className="w-full px-4">
+                                
                                 <AutomateBettingForm />
                             </div>
                         </div>

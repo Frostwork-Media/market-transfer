@@ -6,9 +6,8 @@ import { floatToPercent, round2SF, extractSlugFromURL } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import DebouncedPercentageInput from './DebouncedPercentageInput';
 
-export default function BettingTable({processedData, setUserData, apiKey, addBetsDoneData, userData}){
-
-    console.log('Mounting betting table')
+export default function BettingTable({processedData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
+    console.log("Mounting betting table")
 
     const headings = [
             "Slug",
@@ -54,11 +53,12 @@ export default function BettingTable({processedData, setUserData, apiKey, addBet
         setUserData(transformedData);
     };
 
-    const handleBet = (slug, outcomeToBuy, amountToPay) => {
-        return placeBetBySlug(apiKey, slug, amountToPay, outcomeToBuy)
+    const handleBet = async (slug, outcomeToBuy, amountToPay) => {
+        await placeBetBySlug(apiKey, slug, amountToPay, outcomeToBuy)
             .then(() => {
                 addBetsDoneData(slug, outcomeToBuy, amountToPay);
-                userData; //for UseEffect
+                console.log("Bet placed successfully on ", slug, outcomeToBuy, amountToPay);
+                refreshColumnAfterBet(slug)
             })
             .catch((error) => {
                 console.log(error)

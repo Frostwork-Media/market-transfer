@@ -14,9 +14,7 @@ export default function Page() {
                             <div className="w-full max-w-md px-4">
                                 <Form />
                             </div>
-                            <a href="https://chat.whatsapp.com/DKKQ5wESCOHGeN5nCFVotI" target='_blank' className="bg-green-500 hover:bg-green-700  font-bold py-2 px-4 rounded-full mt-8">Say hi👋 or report bugs🐛 (whatsapp chat)</a>
-                            <Link href="/automate-betting" className="text-blue-500 hover:text-blue-700">Automate Betting</Link>
-                            <Link href="/GPT4casting" className="text-blue-500 hover:text-blue-700">GPT-4casting</Link>
+                            <Link href="https://chat.whatsapp.com/DKKQ5wESCOHGeN5nCFVotI" target='_blank' className="bg-green-500 hover:bg-green-700  font-bold py-2 px-4 rounded-full mt-8">Say hi👋 or report bugs🐛 (whatsapp chat)</Link>
                         </div>
                     </div>
                 </div>
