@@ -259,6 +259,7 @@ export default function SpreadsheetForm() {
 
     const handleAPIKeyChange = (event) => {
         setApiKey(event.target.value);
+        window?.localStorage.setItem('api-key', JSON.stringify(apiKey));
     }
 
     return (
