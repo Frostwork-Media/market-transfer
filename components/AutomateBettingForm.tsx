@@ -12,7 +12,7 @@ import Link from 'next/link'
 
 export default function SpreadsheetForm() {
 
-    const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || window?.localStorage.getItem('api-key'));
+    const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || "");
     const [betsDoneData, setBetsDoneData] = useState([]);
 
     // data
@@ -197,6 +197,10 @@ export default function SpreadsheetForm() {
         console.log("Getting stored data")
         const storedUserData = JSON.parse(window.localStorage.getItem('user-data'));
         const storedProcessedData = JSON.parse(window.localStorage.getItem('processed-data'));
+        const storedApiKey = window.localStorage.getItem('api-key');
+        if (storedApiKey) {
+            setApiKey(storedApiKey);
+        }
 
         if (storedUserData) {
             setUserData(storedUserData);
@@ -255,7 +259,6 @@ export default function SpreadsheetForm() {
 
     const handleAPIKeyChange = (event) => {
         setApiKey(event.target.value);
-        window?.localStorage.setItem('api-key', apiKey);
     }
 
     return (
