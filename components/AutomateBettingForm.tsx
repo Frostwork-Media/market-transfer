@@ -11,7 +11,8 @@ import BetsDoneTextArea from './BetsDoneTextArea';
 import Link from 'next/link'
 
 export default function SpreadsheetForm() {
-    const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || '');
+
+    const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || window.localStorage.getItem('api-key'));
     const [betsDoneData, setBetsDoneData] = useState([]);
 
     // data
@@ -254,6 +255,7 @@ export default function SpreadsheetForm() {
 
     const handleAPIKeyChange = (event) => {
         setApiKey(event.target.value);
+        window?.localStorage.setItem('api-key', apiKey);
     }
 
     return (
