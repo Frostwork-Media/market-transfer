@@ -7,15 +7,27 @@ export function getIDBySlug(slug) {
   return getMarketBySlug(slug).then(market => market.id);
 }
 
-export function placeBet(apiKey, marketID, betAmount, outcomeToBuy){
+export function placeBet(apiKey, marketID, betAmount, outcomeToBuy) {
   return fetch('/api/placeBet', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ apiKey, marketID, betAmount, outcomeToBuy }),
-  });
-};
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.text().then((text) => {
+          throw new Error(`Error placing bet: ${res.status} ${res.statusText} - ${text}`);
+        });
+      }
+      return res.json();
+    })
+    .catch((error) => {
+      console.error('Error placing bet:', error.message);
+      throw error;
+    });
+}
 
 // place bet specifically by slug
 

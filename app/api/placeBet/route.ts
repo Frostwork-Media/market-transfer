@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 
+import fetch from 'node-fetch';
+
 export async function POST(request: Request) {
   const body = await request.json();
   
+  const sendTime = Date.now();
+
   console.log('placeBet called with body:', body.apiKey, body.betAmount, body.outcomeToBuy, body.marketID);
   
   const res = await fetch('https://manifold.markets/api/v0/bet', {
@@ -17,16 +21,25 @@ export async function POST(request: Request) {
       contractId: body.marketID,
     }),
   });
-
+  
   if (!res.ok) {
     const errorDetails = await res.json();
     console.error(errorDetails);
-    return NextResponse.error();
+    return NextResponse.json({error: "Error placing the bet"}, {status: 500 });
+  }
+  
+  const data = await res.json();
+  
+  // Check if the bet's timestamp is before sendTime
+  const betTimestamp = data.fills[0].timestamp;
+
+  if (betTimestamp < sendTime) {
+    console.error('Error: Bet timestamp is before sendTime');
+    console.log(data);
+    return NextResponse.json({error: "Bet timestamp is before sendTime"}, {status: 500 });
   }
 
-  const data = await res.json();
-
-  console.log(data)
+  console.log("Bet response", data)
 
   return NextResponse.json(data)
 }
