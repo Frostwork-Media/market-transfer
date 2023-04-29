@@ -28,16 +28,21 @@ export async function POST(request: Request) {
     return NextResponse.json({error: "Error placing the bet"}, {status: 500 });
   }
   
-  const data = await res.json();
+  const data = await res.json() as any;
   
-  // Check if the bet's timestamp is before sendTime
-  const betTimestamp = data.fills[0].timestamp;
+  if ('fills' in data) {
+    const betTimestamp = data.fills[0].timestamp;
 
+  // Check if the bet's timestamp is before sendTime
   if (betTimestamp < sendTime) {
     console.error('Error: Bet timestamp is before sendTime');
     console.log(data);
     return NextResponse.json({error: "Bet timestamp is before sendTime"}, {status: 500 });
   }
+  } else {
+    return NextResponse.json({error: "No fill"}, {status: 500 });
+  }
+
 
   console.log("Bet response", data)
 
