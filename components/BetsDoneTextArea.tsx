@@ -10,7 +10,7 @@ export default function BetsDoneTextArea({betsDoneData}) {
                   .reverse() // Reverse the array to show the newest value at the top
                   .map(
                     (entry) =>
-                      `On market "${entry.slug}" bought ${entry.amountToPay} of ${entry.outcomeToBuy}`
+                      `On market "${entry.slug}" bought M$${entry.amountToPay} of ${entry.outcomeToBuy}`
                   )
                   .join('\n')
               }
