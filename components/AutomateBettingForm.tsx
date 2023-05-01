@@ -14,6 +14,8 @@ export default function SpreadsheetForm() {
 
     const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || "");
     const [betsDoneData, setBetsDoneData] = useState([]);
+    const [market_slug, setMarketSlug] = useState("");
+    const [prob, setMarketProb] = useState(50);
 
     // data
     type userDataType = {
@@ -220,7 +222,7 @@ export default function SpreadsheetForm() {
             setProcessedData([]);
             return;
         }
-        const seperatedData = seperateData(userData, processedData); 
+        const seperatedData = seperateData(userData, processedData);
         console.log("seperateData", seperatedData)
         processNewAndUpdatedData(seperatedData.modifiedData, seperatedData.unmodifiedData);
     }, [userData]);
@@ -247,20 +249,34 @@ export default function SpreadsheetForm() {
     }
 
     const handleSearchSelect = async (market) => {
-        if (!processedData.map((m) => m.slug).includes(extractSlugFromURL(market.url))) {
-            const updatedUserData =
-                [{
-                    slug: extractSlugFromURL(market.url),
-                    userProbability: market.probability
-                }
-                    , ...userData];
-            setUserData(updatedUserData);
-        }
+        setMarketSlug(extractSlugFromURL(market.url));
+        setMarketProb(market.probability*100);
     };
 
     const handleAPIKeyChange = (event) => {
         setApiKey(event.target.value);
     };
+
+    const addToTable = (event) => {
+
+        if (!processedData.map((m) => m.slug).includes(market_slug)) {
+            const updatedUserData =
+                    [{
+                        slug: market_slug,
+                        userProbability: +prob/100
+                    }
+                        , ...userData];
+            setUserData(updatedUserData);
+        }
+    }
+
+    const handleSlugInput = (event) => {
+        setMarketSlug(event.target.value)
+    }
+
+    const handleProbInput = (event) => {
+        setMarketProb(event.target.value)
+    }
 
     useEffect(() => {
         window.localStorage.setItem('api-key', apiKey);
@@ -270,9 +286,32 @@ export default function SpreadsheetForm() {
         <div className="w-full">
             <div className="my-4 flex justify-center">
                 <div className="my-4 w-1/2">
-                    <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Click entries to add them to the table:</label>
+
+                    <label htmlFor="market_slug" className="block text-sm font-medium text-gray-700">Slug:</label>
+
+                    <input
+                        id="market_slug"
+                        name="market_slug"
+                        className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        value={market_slug}
+                        onChange={handleSlugInput}
+                    />
+
+                    <label htmlFor="market_slug" className="block text-sm font-medium text-gray-700">Probability (percentage):</label>
+
+                    <input
+                        id="market_prob"
+                        name="market_prob"
+                        className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        value={prob}
+                        onChange={handleProbInput}
+                    />
+
+                    <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Optional: search markets to autofill</label>
 
                     <SearchManifold handleSelect={handleSearchSelect} />
+
+                    <LoadingButton passOnClick={addToTable} buttonText={"Add to table"} />
 
                     <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
 
