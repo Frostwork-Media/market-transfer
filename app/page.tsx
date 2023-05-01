@@ -8,9 +8,9 @@ export default function Page({}){
                     <div className="flex flex-col">
                         <div className="relative w-full my-auto">
                             <h1 className="text-6xl font-bold text-center py-4">Automate Betting</h1>
-                            <h2 className="text-2xl font-bold text-center py-4">Automate your manifold bets according to your true probabilities to maximise profit under kelly</h2>
+                            <h2 className="text-2xl font-bold text-center py-4">Automate your bets on Manifold Markets according to your true probabilities to maximise profit under Kelly</h2>
                             <div className="w-full px-4">
-                                
+
                                 <AutomateBettingForm />
                             </div>
                         </div>
