@@ -12,7 +12,8 @@ export default function Search({ handleSelect }) {
     const handleSearch = async (search) => {
         try {
             const data = await searchMarket(search);
-            const unresolvedMarkets = data.filter(market => !market.isResolved);
+            const binaryMarkets = data.filter(market => market.outcomeType == "BINARY");
+            const unresolvedMarkets = binaryMarkets.filter(market => !market.isResolved);
             setResults(unresolvedMarkets.slice(0, 10));
         } catch (error) {
             console.log(error);
