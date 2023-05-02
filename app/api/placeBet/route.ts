@@ -43,7 +43,6 @@ export async function POST(request: Request) {
     return NextResponse.json({error: "No fill"}, {status: 500 });
   }
 
-
   console.log("Bet response", data)
 
   return NextResponse.json(data)

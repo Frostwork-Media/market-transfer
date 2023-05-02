@@ -14,7 +14,7 @@ export default function SpreadsheetForm() {
 
     const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || "");
     const [betsDoneData, setBetsDoneData] = useState([]);
-    const [market_slug, setMarketSlug] = useState("");
+    const [marketSlug, setMarketSlug] = useState("");
     const [prob, setMarketProb] = useState(50);
 
     // data
@@ -259,10 +259,10 @@ export default function SpreadsheetForm() {
 
     const addToTable = (event) => {
 
-        if (!processedData.map((m) => m.slug).includes(market_slug)) {
+        if (!processedData.map((m) => m.slug).includes(marketSlug)) {
             const updatedUserData =
                     [{
-                        slug: market_slug,
+                        slug: marketSlug,
                         userProbability: +prob/100
                     }
                         , ...userData];
@@ -293,7 +293,7 @@ export default function SpreadsheetForm() {
                         id="market_slug"
                         name="market_slug"
                         className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value={market_slug}
+                        value={marketSlug}
                         onChange={handleSlugInput}
                     />
 
