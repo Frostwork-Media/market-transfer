@@ -2,8 +2,9 @@ import { searchMarket } from '../lib/api'
 import { useEffect, useState } from 'react'
 import useDebounce from '../lib/hooks/useDebounce'
 import Image from 'next/image'
+import { extractSlugFromURL } from '@/lib/utils'
 
-export default function Search({ handleSelect }) {
+export default function Search({ handleSelect, processedData }) {
     const [results, setResults] = useState([])
     const [isResultsVisible, setIsResultsVisible] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -12,7 +13,8 @@ export default function Search({ handleSelect }) {
     const handleSearch = async (search) => {
         try {
             const data = await searchMarket(search);
-            const validMarkets = data.filter(market => market.outcomeType == "BINARY" && !market.isResolved);
+            const newMarkets = data.filter((market) => !processedData.map((row) => row.slug).includes(extractSlugFromURL(market.url)));
+            const validMarkets = newMarkets.filter(market => market.outcomeType == "BINARY" && !market.isResolved);
             setResults(validMarkets.slice(0, 10));
         } catch (error) {
             console.log(error);

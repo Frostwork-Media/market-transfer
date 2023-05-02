@@ -309,7 +309,7 @@ export default function SpreadsheetForm() {
 
                     <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Optional: search markets to autofill</label>
 
-                    <SearchManifold handleSelect={handleSearchSelect} />
+                    <SearchManifold handleSelect={handleSearchSelect} processedData={processedData} />
 
                     <LoadingButton passOnClick={addToTable} buttonText={"Add to table"} />
 
