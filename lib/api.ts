@@ -8,18 +8,12 @@ export function getIDBySlug(slug) {
 }
 
 export function placeBet(apiKey, marketID, betAmount, outcomeToBuy) {
-  return fetch('https://manifold.markets/api/v0/bet', {
-    cache: 'no-store',
+  return fetch('/api/placeBet', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Key ${apiKey}`,
     },
-    body: JSON.stringify({
-      amount: betAmount,
-      outcome: outcomeToBuy,
-      contractId: marketID,
-    }),
+    body: JSON.stringify({ apiKey, marketID, betAmount, outcomeToBuy }),
   })
     .then((res) => {
       if (!res.ok) {
@@ -28,27 +22,6 @@ export function placeBet(apiKey, marketID, betAmount, outcomeToBuy) {
         });
       }
       return res.json();
-    })
-    .then((data) => {
-      const sendTime = Date.now();
-
-      if ('fills' in data) {
-        const betTimestamp = data.fills[0].timestamp;
-
-        // Check if the bet's timestamp is before sendTime
-        if (betTimestamp < sendTime) {
-          console.error('Error: Bet timestamp is before sendTime');
-          console.log(data);
-          throw new Error('Bet timestamp is before sendTime');
-        }
-      } else {
-        throw new Error('No fill');
-      }
-
-      console.log('Bet response', data);
-
-      return data;
-    
     })
     .catch((error) => {
       console.error('Error placing bet:', error.message);
