@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import fetch from 'node-fetch';
+// import fetch from 'node-fetch';
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -10,6 +10,7 @@ export async function POST(request: Request) {
   console.log('placeBet called with body:', body.apiKey, body.betAmount, body.outcomeToBuy, body.marketID);
   
   const res = await fetch('https://manifold.markets/api/v0/bet', {
+    cache: 'no-store',
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
