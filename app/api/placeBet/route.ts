@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// import fetch from 'node-fetch';
+// NEED TO USE API PAGE ROUTE DUE TO CORS LIMITATIONS ON CLIENT SIDE
 
 export async function POST(request: Request) {
   const body = await request.json();
