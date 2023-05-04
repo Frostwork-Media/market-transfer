@@ -9,10 +9,11 @@ import SearchManifold from './SearchManifold';
 import BettingTable from './BettingTable';
 import BetsDoneTextArea from './BetsDoneTextArea';
 import Link from 'next/link'
+import ApiKeyImput from './ApiKeyInput';
 
 export default function SpreadsheetForm() {
 
-    const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_MANIFOLD_API_KEY || "");
+    const [apiKey, setApiKey] = useState("");
     const [betsDoneData, setBetsDoneData] = useState([]);
     const [marketSlug, setMarketSlug] = useState("");
     const [prob, setMarketProb] = useState(50);
@@ -253,9 +254,7 @@ export default function SpreadsheetForm() {
         setMarketProb(market.probability*100);
     };
 
-    const handleAPIKeyChange = (event) => {
-        setApiKey(event.target.value);
-    };
+   
 
     const addToTable = (event) => {
 
@@ -278,9 +277,9 @@ export default function SpreadsheetForm() {
         setMarketProb(event.target.value)
     }
 
-    useEffect(() => {
-        window.localStorage.setItem('api-key', apiKey);
-    }, [apiKey]);
+    const handleApiChange = (key) => {
+      setApiKey(key);
+    }
 
     return (
         <div className="w-full">
@@ -307,7 +306,7 @@ export default function SpreadsheetForm() {
                         onChange={handleProbInput}
                     />
 
-                    <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Optional: search markets to autofill</label>
+                    <label htmlFor="market-search" className="block text-sm font-medium text-gray-700">Optional: search markets to autofill</label>
 
                     <SearchManifold handleSelect={handleSearchSelect} processedData={processedData} />
 
@@ -315,14 +314,7 @@ export default function SpreadsheetForm() {
 
                     <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
 
-                    <input
-                        id="api-key"
-                        name="api-key"
-                        type="password"
-                        className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value={apiKey}
-                        onChange={handleAPIKeyChange}
-                    />
+                    <ApiKeyImput onChange={handleApiChange} keyName = "manifold-api-key" />
 
                     <LoadingButton passOnClick={() => autobet(500)} buttonText={"Autobet 500"} /><LoadingButton passOnClick={handleRefreshData} buttonText={"Refresh table"} />
 
