@@ -19,8 +19,10 @@ export default function FileHandler({ dataToSave, loadDataEndpoint }) {
         const file = event.target.files[0];
         const reader = new FileReader();
         reader.onload = (event) => {
-            const data = JSON.parse(event.target.result);
-            setInputValue(data);
+            if (typeof event.target.result === "string") {
+                const data = JSON.parse(event.target.result);
+                setInputValue(data);
+            }
         }
         reader.readAsText(file);
     }
