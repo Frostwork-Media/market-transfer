@@ -12,10 +12,10 @@ export default function BettingTable({processedData, setUserData, apiKey, addBet
     const headings = [
             "Slug",
             "Title",
-            "Market P",
-            "My P",
+            "Mrkt %",
+            "My %",
             "Buy",
-            "Market return",
+            "Return",
             "Kelly %",
             "ROI",
             "", // button
@@ -79,8 +79,8 @@ export default function BettingTable({processedData, setUserData, apiKey, addBet
 
                 {processedData.map((row) => (
                     <tr key={row.slug}>
-                        <td className="border px-4 py-2">{row.slug}</td>
-                        <td className="border px-4 py-2">{row.title}</td>
+                        <td className="border px-4 py-2 w-32 whitespace-normal">{row.slug}</td>
+                        <td className="border px-4 py-2 w-64 whitespace-normal">{row.title}</td>
                         <td className="border px-4 py-2">{floatToPercent(row.marketP)}</td>
                         <td className="border px-4 py-2">
                             <DebouncedPercentageInput

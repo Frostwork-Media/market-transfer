@@ -9,6 +9,7 @@ import SearchManifold from './SearchManifold';
 import BettingTable from './BettingTable';
 import BetsDoneTextArea from './BetsDoneTextArea';
 import Link from 'next/link'
+import FileHandler from './FileHandler';
 
 export default function SpreadsheetForm() {
 
@@ -149,7 +150,7 @@ export default function SpreadsheetForm() {
 
         //
         let oldDataThatCanStay = unremovedData.filter((row) => !updatedData.map((updateRow) => updateRow.slug).includes(row.slug));
-        ;
+        
         const allUnprocessedData = [...addedData, ...updatedData];
 
         return { modifiedData: allUnprocessedData, unmodifiedData: oldDataThatCanStay };
@@ -286,7 +287,8 @@ export default function SpreadsheetForm() {
         <div className="w-full">
             <div className="my-4 flex justify-center">
                 <div className="my-4 w-1/2">
-
+                    <FileHandler dataToSave={userData} loadDataEndpoint={setUserData} />
+                    
                     <label htmlFor="market_slug" className="block text-sm font-medium text-gray-700">Slug:</label>
 
                     <input
