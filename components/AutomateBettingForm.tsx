@@ -324,9 +324,10 @@ export default function SpreadsheetForm() {
 
                     <BetsDoneTextArea betsDoneData={betsDoneData} />
 
-                    <Link href="https://github.com/Nathan-Tom/market-transfer" target='_blank' className="mx-2 my-2 bg-green-500 hover:bg-green-700  font-bold py-2 px-4 rounded-full mt-8">GitHub Repo (Feel free to make issues)</Link>
-                    <Link href="https://chat.whatsapp.com/DKKQ5wESCOHGeN5nCFVotI" target='_blank' className="mx-2 my-2 bg-green-500 hover:bg-green-700  font-bold py-2 px-4 rounded-full mt-8">Say hi👋 or report bugs🐛 (whatsapp chat)</Link>
-
+                    <div className='flex flex-wrap gap-2 m-2 mt-8'>
+                        <Link href="https://github.com/Nathan-Tom/market-transfer" target='_blank' className="bg-green-500 hover:bg-green-700 font-bold py-2 px-4 rounded-full">GitHub Repo (Feel free to make issues)</Link>
+                        <Link href="https://chat.whatsapp.com/DKKQ5wESCOHGeN5nCFVotI" target='_blank' className="bg-green-500 hover:bg-green-700 font-bold py-2 px-4 rounded-full">Say hi👋 or report bugs🐛 (whatsapp chat)</Link>
+                    </div>
                 </div>
             </div>
             <div className="my-4">
