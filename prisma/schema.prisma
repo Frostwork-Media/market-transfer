@@ -27,7 +27,7 @@ model Question {
   marketCorrectionTime    DateTime
   rOI                     Float
   aggregator              AggregatorEnum
-  broadQuestionId         Int            
+  broadQuestionId         Int?         
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 }
