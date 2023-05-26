@@ -171,6 +171,34 @@ export default function SpreadsheetForm() {
             window?.localStorage.setItem('processed-data', JSON.stringify(finalData));
             const saveUserData = finalData.map((row) => ({ slug: row.slug, userProbability: row.userProbability }));
             window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
+
+            // Here's where you can send the data to the API
+            finalData.forEach(async (data) => {
+                const questionData = {
+                    title: data.title,
+                    url: data.slug, // assuming the slug is the URL
+                    marketProbability: data.marketP,
+                    userProbability: data.userProbability,
+                    marketCorrectionTime: new Date(), // replace with actual value
+                    rOI: data.rOI,
+                    aggregator: "MANIFOLD", // replace with actual value
+                    broadQuestionId: 1, // replace with actual value
+                };
+
+                const response = await fetch('/api/question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(questionData)
+                });
+
+                if (response.ok) {
+                    console.log('Data sent successfully');
+                } else {
+                    console.log('Error sending data');
+                }
+            });
         } catch (error) {
             console.log(error)
             alert('Error parsing the pasted data. Please ensure it is in the correct format.');
@@ -227,6 +255,7 @@ export default function SpreadsheetForm() {
         const seperatedData = seperateData(userData, processedData);
         console.log("seperateData", seperatedData)
         processNewAndUpdatedData(seperatedData.modifiedData, seperatedData.unmodifiedData);
+
     }, [userData]);
 
     const refreshColumnAfterBet = async (slug) => {

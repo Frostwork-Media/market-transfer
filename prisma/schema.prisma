@@ -17,3 +17,29 @@ model Test {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Question {
+  id                      Int     @id @default(autoincrement())
+  title                   String
+  url                     String
+  marketProbability       Float
+  userProbability         Float
+  marketCorrectionTime    DateTime
+  rOI                     Float
+  aggregator              AggregatorEnum
+  broadQuestionId         Int            
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model BroadQuestion{
+  id        Int     @id @default(autoincrement())
+  title     String
+}
+
+enum AggregatorEnum{
+  MANIFOLD
+  METACULUS
+  POLYMARKET
+  STOCKS
+}
