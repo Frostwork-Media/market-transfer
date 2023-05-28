@@ -7,8 +7,9 @@ import prisma from '../../../lib/prisma';
 export async function POST(
     req: NextApiRequest,
 ) {
-    const questionData = req.body;
-    console.log(questionData)
+    const questionData = await req.json();
+    console.log("adding to db")
+    console.log("question data:", questionData)
 
     try {
         const newQuestion = await prisma.question.create({
@@ -26,7 +27,7 @@ export async function POST(
         
         return NextResponse.json(newQuestion)
     } catch (err) {
-        console.log(err)
+        console.log("Database upload failure",err)
         return NextResponse.error()
     }
 }

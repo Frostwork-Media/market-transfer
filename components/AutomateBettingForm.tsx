@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getMarketBySlug, placeBetBySlug } from '@/lib/api';
+import { addQuestionToDatabase, getMarketBySlug, placeBetBySlug } from '@/lib/api';
 import * as calc from '../lib/probabilityCalculations';
 import { extractSlugFromURL } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
@@ -11,6 +11,7 @@ import BetsDoneTextArea from './BetsDoneTextArea';
 import Link from 'next/link'
 import FileHandler from './FileHandler';
 import ApiKeyImput from './ApiKeyInput';
+import { databaseQuestionData } from '@/lib/types';
 
 export default function SpreadsheetForm() {
 
@@ -173,32 +174,35 @@ export default function SpreadsheetForm() {
             window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
 
             // Here's where you can send the data to the API
-            finalData.forEach(async (data) => {
-                const questionData = {
+          /*   sortedData.forEach(async (data) => {
+                let databaseQuestionData: databaseQuestionData = {
                     title: data.title,
-                    url: data.slug, // assuming the slug is the URL
+                    url: data.url,
+                    marketProbability: data.marketProbability,
+                    userProbability: data.userProbability,
+                    marketCorrectionTime: null,
+                    rOI: data.rOI,
+                    aggregator: "MANIFOLD",
+                    broadQuestionId: null,
+                }
+                await addQuestionToDatabase(databaseQuestionData);
+            }); */
+            let data = sortedData.find(() => true);  // Get the first item
+            console.log(data);
+            if (data) {
+                let databaseQuestionData: databaseQuestionData = {
+                    title: data.title,
+                    url: data.slug,
                     marketProbability: data.marketP,
                     userProbability: data.userProbability,
-                    marketCorrectionTime: new Date(), // replace with actual value
+                    marketCorrectionTime: new Date,
                     rOI: data.rOI,
-                    aggregator: "MANIFOLD", // replace with actual value
-                    broadQuestionId: 1, // replace with actual value
+                    aggregator: "MANIFOLD",
+                    broadQuestionId: null,
                 };
-
-                const response = await fetch('/api/question', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(questionData)
-                });
-
-                if (response.ok) {
-                    console.log('Data sent successfully');
-                } else {
-                    console.log('Error sending data');
-                }
-            });
+                console.log("sending to database", databaseQuestionData);
+                await addQuestionToDatabase(databaseQuestionData);
+            }
         } catch (error) {
             console.log(error)
             alert('Error parsing the pasted data. Please ensure it is in the correct format.');
@@ -217,9 +221,22 @@ export default function SpreadsheetForm() {
 
         try {
             window?.localStorage.setItem('processed-data', JSON.stringify(sortedData));
-
             const saveUserData = sortedData.map((row) => ({ slug: row.slug, userProbability: row.userProbability }));
             window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
+            sortedData.forEach( async (data) => {
+                let databaseQuestionData:databaseQuestionData = {
+                    title: data.title,
+                    url: data.url,
+                    marketProbability: data.marketProbability,
+                    userProbability: data.userProbability,
+                    marketCorrectionTime: null,
+                    rOI: data.rOI,
+                    aggregator: "MANIFOLD",
+                    broadQuestionId: null,
+                }
+                await addQuestionToDatabase(databaseQuestionData);
+        });
+            
         } catch (error) {
             console.log(error)
             alert('Error parsing the pasted data. Please ensure it is in the correct format.');

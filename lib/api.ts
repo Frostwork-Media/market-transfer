@@ -1,3 +1,5 @@
+import { databaseQuestionData } from "./types";
+
 export function getMarketBySlug(slug) {
   console.log(`Fetching market with slug ${slug}`);
   return fetch(`https://manifold.markets/api/v0/slug/${slug}`).then(res => res.json());
@@ -73,3 +75,34 @@ export function getMarketsByGroupID(groupID) {
   return fetch(`https://manifold.markets/api/v0/group/${groupID}`).then(res => res.json());
 }
 
+export async function addQuestionToDatabase(questionData: databaseQuestionData) {
+  return fetch('/api/add-to-db',{
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      title: questionData.title,
+      url: questionData.url,
+      marketProbability: questionData.marketProbability,
+      userProbability: questionData.userProbability,
+      marketCorrectionTime: questionData.marketCorrectionTime,
+      rOI: questionData.rOI,
+      aggregator: questionData.aggregator,
+      broadQuestionId: questionData.broadQuestionId,
+    }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.text().then((text) => {
+          throw new Error(`Error placing bet: ${res.status} ${res.statusText} - ${text}`);
+        });
+      }
+      console.log('Data Uploaded');
+      return res.json();
+    })
+    .catch((error) => {
+      console.error('Error adding question to database:', error.message);
+      throw error;
+    });
+}
