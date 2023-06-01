@@ -93,16 +93,28 @@ export async function addQuestionToDatabase(questionData: databaseQuestionData) 
     }),
   })
     .then((res) => {
-      if (!res.ok) {
-        return res.text().then((text) => {
-          throw new Error(`Error placing bet: ${res.status} ${res.statusText} - ${text}`);
-        });
-      }
       console.log('Data Uploaded');
       return res.json();
     })
     .catch((error) => {
       console.error('Error adding question to database:', error.message);
+      throw error;
+    });
+}
+
+export async function getQuestionsFromDatabase() {
+  return fetch('/api/questions', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((res) => {
+      console.log('Data retrieved successfully');
+      return res.json();
+    })
+    .catch((error) => {
+      console.error('Error fetching questions from database:', error.message);
       throw error;
     });
 }

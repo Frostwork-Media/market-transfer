@@ -6,7 +6,7 @@ import { floatToPercent, round2SF, extractSlugFromURL } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import DebouncedPercentageInput from './DebouncedPercentageInput';
 
-export default function BettingTable({processedData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
+export default function BettingTable({tableData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
     console.log("Mounting betting table")
 
     const headings = [
@@ -14,10 +14,12 @@ export default function BettingTable({processedData, setUserData, apiKey, addBet
             "Title",
             "Mrkt %",
             "My %",
+            "Market Correction",
             "Buy",
             "Return",
             "Kelly %",
             "ROI",
+            "ROI per day"
             "", // button
             "" // delete
         ];
@@ -28,7 +30,7 @@ export default function BettingTable({processedData, setUserData, apiKey, addBet
         const newUserProbability = parseFloat(value) / 100;
         const newRow = { slug: slug, userProbability: newUserProbability };
         // Update the user data
-        const updatedUserData = processedData.map((row) => {
+        const updatedUserData = tableData.map((row) => {
             if (row.slug === slug) {
                 return newRow;
             }
@@ -38,7 +40,7 @@ export default function BettingTable({processedData, setUserData, apiKey, addBet
     };
 
     const handleDeleteRow = (slug) => {
-        const updatedData = [...processedData];
+        const updatedData = [...tableData];
         const index = updatedData.findIndex(row => row.slug === slug);
         updatedData.splice(index, 1);
         
@@ -77,7 +79,7 @@ export default function BettingTable({processedData, setUserData, apiKey, addBet
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
 
-                {processedData.map((row) => (
+                {tableData.map((row) => (
                     <tr key={row.slug}>
                         <td className="border px-4 py-2 w-32 whitespace-normal">{row.slug}</td>
                         <td className="border px-4 py-2 w-64 whitespace-normal">{row.title}</td>
@@ -87,6 +89,15 @@ export default function BettingTable({processedData, setUserData, apiKey, addBet
                                 slug={row.slug}
                                 initialValue={row.userProbability * 100}
                                 onDebouncedChange={handleMyPChange}
+                            />
+                        </td>
+                        <td className="border px-4 py-2">
+                            <DatePicker
+                                id="marketCorrectionTime"
+                                name="marketCorrectionTime"
+                                selected={marketCorrectionTime}
+                                onChange={handleMarketCorrectionTimeChange}
+                                className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             />
                         </td>
                         <td className="border px-4 py-2">{row.buy}</td>
