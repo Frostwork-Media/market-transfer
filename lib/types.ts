@@ -1,7 +1,7 @@
 export interface userQuestion {
     url: string,
     userProbability: number,
-    marketCorrectionDate: number,
+    marketCorrectionDate: Date,
 }
 
 export interface databaseQuestion {
@@ -23,6 +23,7 @@ export interface databaseQuestion {
 export interface frontendQuestion {
     title: string,
     url: string,
+    slug: string,
     aggregator: "MANIFOLD" | "AIRTABLE" | "METACULUS",
     marketProbabily: number,
     userProbability: number,

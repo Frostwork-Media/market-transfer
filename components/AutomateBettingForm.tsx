@@ -24,7 +24,11 @@ export default function SpreadsheetForm() {
     const [userData, setUserData] = useState<userQuestion[]>([]);
     const [tableData, settableData] = useState<frontendQuestion[]>([]);
 
-//todo rename to table data
+    const [marketCorrectionTime, setMarketCorrectionTime] = useState(new Date());
+
+    const handleMarketCorrectionTimeChange = (date) => {
+        setMarketCorrectionTime(date);
+    };
 
     const addBetsDoneData = async (slug, outcomeToBuy, amountToPay) => {
         const nextRow = {
@@ -46,7 +50,7 @@ export default function SpreadsheetForm() {
                 .then(async () => {
                     await addBetsDoneData(tableData[0].slug, tableData[0].buy, 100);
                     console.log("Bet placed successfully on ", tableData[0].slug, 100, tableData[0].buy);
-                    await refreshColumnAfterBet(tableData[0].slug);
+                    //await refreshColumnAfterBet(tableData[0].slug);
                 })
                 .catch((error) => {
                     console.log(error)
@@ -61,6 +65,10 @@ export default function SpreadsheetForm() {
         setMarketProb(market.probability*100);
     };
 
+    const updateData = async (userData) => {
+        console.log("Updating data", userData);   
+    }
+
     // processed data handler
     useEffect(() => {
         console.log("Processing data");
@@ -72,12 +80,13 @@ export default function SpreadsheetForm() {
     const addToTable = (event) => {
 
         if (!tableData.map((m) => m.slug).includes(marketSlug)) {
-            const updatedUserData =
-                    [{
-                        slug: marketSlug,
-                        userProbability: +prob/100
-                    }
-                        , ...userData];
+            const updatedUserData: userQuestion[] =
+                [{
+                    url: marketSlug,
+                    userProbability: +prob / 100,
+                    marketCorrectionDate: marketCorrectionTime,
+                }
+                    , ...userData];
             setUserData(updatedUserData);
         }
     }
@@ -92,6 +101,16 @@ export default function SpreadsheetForm() {
 
     const handleApiChange = (key) => {
       setApiKey(key);
+    }
+
+    const handleRefreshData = async () => {
+        console.log("Refreshing data");
+    }
+
+    const refreshColumnAfterBet = async (slug) => {
+        console.log("Refreshing column after bet", slug);
+        const updatedUserData: userQuestion[] = userData.filter((m) => m.url !== slug);
+        setUserData(updatedUserData);
     }
 
     useEffect(() => {

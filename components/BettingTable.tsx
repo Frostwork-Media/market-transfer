@@ -5,6 +5,7 @@ import { getMarketBySlug, placeBetBySlug } from '@/lib/api';
 import { floatToPercent, round2SF, extractSlugFromURL } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import DebouncedPercentageInput from './DebouncedPercentageInput';
+import DatePicker from 'react-datepicker';
 
 export default function BettingTable({tableData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
     console.log("Mounting betting table")
@@ -19,7 +20,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
             "Return",
             "Kelly %",
             "ROI",
-            "ROI per day"
+            "ROI per day",
             "", // button
             "" // delete
         ];
@@ -91,7 +92,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
                                 onDebouncedChange={handleMyPChange}
                             />
                         </td>
-                        <td className="border px-4 py-2">
+                        {/* <td className="border px-4 py-2">
                             <DatePicker
                                 id="marketCorrectionTime"
                                 name="marketCorrectionTime"
@@ -99,7 +100,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
                                 onChange={handleMarketCorrectionTimeChange}
                                 className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             />
-                        </td>
+                        </td> */}
                         <td className="border px-4 py-2">{row.buy}</td>
                         {/*<td className="border px-4 py-2">{floatToPercent(row.marketWinChance)}</td>
                         <td className="border px-4 py-2">{floatToPercent(row.myWinChance)}</td>*/}

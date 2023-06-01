@@ -1,8 +1,13 @@
-import { databaseQuestionData } from "./types";
+import { databaseQuestion } from "./types";
 
 export function getMarketBySlug(slug) {
   console.log(`Fetching market with slug ${slug}`);
   return fetch(`https://manifold.markets/api/v0/slug/${slug}`).then(res => res.json());
+}
+
+export function getMarketByUrl(url) {
+  console.log(`Fetching market with url ${url}`);
+  return getMarketBySlug(url.split('/').pop());
 }
 
 export function getIDBySlug(slug) {
@@ -75,7 +80,7 @@ export function getMarketsByGroupID(groupID) {
   return fetch(`https://manifold.markets/api/v0/group/${groupID}`).then(res => res.json());
 }
 
-export async function addQuestionToDatabase(questionData: databaseQuestionData) {
+export async function addQuestionToDatabase(questionData: databaseQuestion) {
   return fetch('/api/add-to-db',{
     method: 'POST',
     headers: {

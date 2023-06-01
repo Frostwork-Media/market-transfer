@@ -7,7 +7,7 @@ import prisma from '../../../lib/prisma';
 export async function POST(
     req: NextApiRequest,
 ) {
-    const questionData = await req.json();
+    const questionData = req.body
     console.log("adding to db")
     console.log("question data:", questionData)
 
