@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export default function Component({defaultKey = null, onChange, keyName}) {
-    const [apiKey, setApiKey] = useState(defaultKey)
+    const [apiKey, setApiKey] = useState(defaultKey || '')
 
     useEffect(() => {
         const storedKey = window?.localStorage.getItem(keyName)

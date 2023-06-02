@@ -19,6 +19,7 @@ export function round2SF(f: number): number {
 }
 
 export function extractSlugFromURL(url) {
+  console.log(url);
   const parts = url.split("/");
   return parts[parts.length - 1];
 }

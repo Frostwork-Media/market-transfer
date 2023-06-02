@@ -1,6 +1,6 @@
 import { promises } from "dns";
 import {userQuestion, databaseQuestion } from "./types"
-import { addQuestionToDatabase, getMarketByUrl, getQuestionsFromDatabase, placeBetBySlug } from '@/lib/api';
+import { addQuestionToDatabase, getMarketBySlug, getMarketByUrl, getQuestionsFromDatabase, placeBetBySlug } from '@/lib/api';
 
 export const buyYes = (marketProbability, myProbability ) => {
     if(typeof marketProbability !== 'number' || typeof myProbability !== 'number')
@@ -57,10 +57,10 @@ const getAllDatabaseQuestionData = async (): Promise<databaseQuestion> => {
 } 
 
 const processData = async (userData: userQuestion): Promise<databaseQuestion> => {
-    console.log("Processing data for", userData.url, userData.userProbability);
+    console.log("Processing data for", userData.slug, userData.userProbability);
     // Fix this
     const currentTime = new Date;
-    const response = await getMarketByUrl(userData.url);
+    const response = await getMarketBySlug(userData.slug);
     const marketProbability = parseFloat(response.probability);
     const thingToBuy = buyYes(response.probability, userData.userProbability);
     const marketWinChance = calcMarketWinChance(response.probability, thingToBuy);
@@ -69,12 +69,12 @@ const processData = async (userData: userQuestion): Promise<databaseQuestion> =>
     const kellyBetProportion = calcKellyBetProportion(marketReturn, myWinChance);
     const betEVreturn = calcBetEVreturn(marketWinChance, myWinChance);
     const betROI = calcBetROI(betEVreturn, marketWinChance);
-    // const betROIOverTime = calcBetROIOverTime(betROI, currentTime, )
-    //const roundedUserProbility = Math.round( * 1000) / 10; // 3 decimal places
-
+    const betROIOverTime = calcBetROIOverTime(betROI, currentTime, userData.marketCorrectionTime);
+    
     const output: databaseQuestion = {
         id: null,
         title: response.question,
+        slug: userData.slug,
         url: userData.url,
         aggregator: "MANIFOLD",
         marketProbability: marketProbability,
@@ -126,24 +126,24 @@ const sortData = (data, sortBy, direction) => {
     }
 }
 
-const seperateData = (newData, databaseData) => {
+export const seperateData = (userData, processedData) => {
     //compare the current user data with the stored user data
     //if they are different, process the data for each row
 
     //if they are the same, do nothing
-    const oldDatabaseData = databaseData?.length > 0 ? databaseData : [];
+    const oldProcessedData = processedData?.length > 0 ? processedData : [];
 
-    if (newData && newData.some(row => isNaN(row.userProbability) && oldDatabaseData && oldDatabaseData.some(row => isNaN(row.userProbability)))) {
+    if (userData && userData.some(row => isNaN(row.userProbability) && oldProcessedData && oldProcessedData.some(row => isNaN(row.userProbability)))) {
         throw new Error("One or more user probabilities are NaN.");
     }
 
     //TODO: same for dates
 
     // additions and updates including changes to my probability
-    const addedData = newData.filter((row) => {
+    const addedData = userData.filter((row) => {
         let isAdded = false;
         
-        if(!oldDatabaseData.map((oldrow) => oldrow.id).includes(row.id)||!oldDatabaseData.map((oldRow) => oldRow.slug).includes(row.slug)){
+        if(!oldProcessedData.map((oldrow) => oldrow.id).includes(row.id)||!oldProcessedData.map((oldRow) => oldRow.slug).includes(row.slug)){
             isAdded = true;
         }
         if (isAdded) return true;
@@ -151,8 +151,8 @@ const seperateData = (newData, databaseData) => {
         return false
     });
 
-    const updatedData = newData.filter((row) => {
-        const oldMatchingRow = oldDatabaseData.find((oldRow) => oldRow.slug === row.slug);
+    const updatedData = userData.filter((row) => {
+        const oldMatchingRow = oldProcessedData.find((oldRow) => oldRow.slug === row.slug);
         if (!oldMatchingRow) return false;
 
         const probabilityChanged = oldMatchingRow.userProbability !== row.userProbability;
@@ -162,10 +162,10 @@ const seperateData = (newData, databaseData) => {
     });
 
     //All the data that has been removed
-    const removedData = oldDatabaseData?.filter((row) => !newData.map((row) => row.slug).includes(row.slug));
+    const removedData = oldProcessedData?.filter((row) => !userData.map((row) => row.slug).includes(row.slug));
 
     //All the data that hasn't been removed from the old processed data
-    let unremovedData = oldDatabaseData.filter((row) => !removedData.map((removeRow) => removeRow.slug).includes(row.slug));
+    let unremovedData = oldProcessedData.filter((row) => !removedData.map((removeRow) => removeRow.slug).includes(row.slug));
 
     //
     let oldDataThatCanStay = unremovedData.filter((row) => !updatedData.map((updateRow) => updateRow.slug).includes(row.slug));
@@ -175,7 +175,7 @@ const seperateData = (newData, databaseData) => {
     return { modifiedData: allUnprocessedData, unmodifiedData: oldDataThatCanStay };
 }
 
-const updateData = () => {
+const updateData = (userData, processedData, setProcessedData) => {
 
 }
 
@@ -203,84 +203,55 @@ const updateData = () => {
 // }
 
 
-// export const processNewAndUpdatedData = async (modifiedData, unmodifiedData) => {
-//     const newProcessedData = await Promise.all(modifiedData?.map((row) => processData(row)));
+export const processNewAndUpdatedData = async (modifiedData, unmodifiedData, setProcessedData) => {
+    const newProcessedData = await Promise.all(modifiedData?.map((row) => processData(row)));
 
-//     const finalData = [...unmodifiedData, ...newProcessedData]
+    const finalData = [...unmodifiedData, ...newProcessedData]
 
-//     const sortedData = sortData(finalData, "rOI", "desc");
+    const sortedData = sortData(finalData, "rOI", "desc");
+    console.log(sortedData);
 
-//     try {
-//         window?.localStorage.setItem('processed-data', JSON.stringify(finalData));
-//         const saveUserData = finalData.map((row) => ({ slug: row.slug, userProbability: row.userProbability }));
-//         window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
+    setProcessedData(sortedData);
 
-//         // Here's where you can send the data to the API
-//       /*   sortedData.forEach(async (data) => {
-//             let databaseQuestionData: databaseQuestionData = {
-//                 title: data.title,
-//                 url: data.url,
-//                 marketProbability: data.marketProbability,
-//                 userProbability: data.userProbability,
-//                 marketCorrectionTime: null,
-//                 rOI: data.rOI,
-//                 aggregator: "MANIFOLD",
-//                 broadQuestionId: null,
-//             }
-//             await addQuestionToDatabase(databaseQuestionData);
-//         }); */
-//         let data = sortedData.find(() => true);  // Get the first item
-//         console.log(data);
-//         if (data) {
-//             let databaseQuestionData: databaseQuestionData = {
-//                 title: data.title,
-//                 url: data.slug,
-//                 marketProbability: data.marketP,
-//                 userProbability: data.userProbability,
-//                 marketCorrectionTime: new Date,
-//                 rOI: data.rOI,
-//                 aggregator: "MANIFOLD",
-//                 broadQuestionId: null,
-//             };
-//             console.log("sending to database", databaseQuestionData);
-//             await addQuestionToDatabase(databaseQuestionData);
-//         }
-//     } catch (error) {
-//         console.log(error)
-//         alert('Error parsing the pasted data. Please ensure it is in the correct format.');
-//     }
+    try {
+        window?.localStorage.setItem('processed-data', JSON.stringify(finalData));
+        const saveUserData = finalData.map((row) => ({ slug: row.slug, userProbability: row.userProbability }));
+        window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
+    } catch (error) {
+        console.log(error)
+        alert('Error parsing the pasted data. Please ensure it is in the correct format.');
+    }
+}
 
-// }
+export const processAllData = async (modifiedData, unmodifiedData) => {
+    const allData = [...modifiedData, ...unmodifiedData?.map((row) => ({ slug: row.slug, userProbability: row.userProbability }))];
 
-// export const processAllData = async (modifiedData, unmodifiedData) => {
-//     const allData = [...modifiedData, ...unmodifiedData?.map((row) => ({ slug: row.slug, userProbability: row.userProbability }))];
+    const newProcessedData = await Promise.all(allData?.map((row) => processData(row)));
 
-//     const newProcessedData = await Promise.all(allData?.map((row) => processData(row)));
+    const sortedData = sortData(newProcessedData, "rOI", "desc");
 
-//     const sortedData = sortData(newProcessedData, "rOI", "desc");
+    setProcessedData(sortedData);
 
-//     setProcessedData(sortedData);
-
-//     try {
-//         window?.localStorage.setItem('processed-data', JSON.stringify(sortedData));
-//         const saveUserData = sortedData.map((row) => ({ slug: row.slug, userProbability: row.userProbability }));
-//         window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
-//         sortedData.forEach( async (data) => {
-//             let databaseQuestionData:databaseQuestionData = {
-//                 title: data.title,
-//                 url: data.url,
-//                 marketProbability: data.marketProbability,
-//                 userProbability: data.userProbability,
-//                 marketCorrectionTime: null,
-//                 rOI: data.rOI,
-//                 aggregator: "MANIFOLD",
-//                 broadQuestionId: null,
-//             }
-//             await addQuestionToDatabase(databaseQuestionData);
-//     });
+    try {
+        window?.localStorage.setItem('processed-data', JSON.stringify(sortedData));
+        const saveUserData = sortedData.map((row) => ({ slug: row.slug, userProbability: row.userProbability }));
+        window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
+        sortedData.forEach( async (data) => {
+            let databaseQuestionData:databaseQuestionData = {
+                title: data.title,
+                url: data.url,
+                marketProbability: data.marketProbability,
+                userProbability: data.userProbability,
+                marketCorrectionTime: null,
+                rOI: data.rOI,
+                aggregator: "MANIFOLD",
+                broadQuestionId: null,
+            }
+            await addQuestionToDatabase(databaseQuestionData);
+    });
         
-//     } catch (error) {
-//         console.log(error)
-//         alert('Error parsing the pasted data. Please ensure it is in the correct format.');
-//     }
-// }
+    } catch (error) {
+        console.log(error)
+        alert('Error parsing the pasted data. Please ensure it is in the correct format.');
+    }
+}

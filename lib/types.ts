@@ -1,16 +1,18 @@
 export interface userQuestion {
-    url: string,
+    slug: string,
+    url: string | null, 
     userProbability: number,
-    marketCorrectionDate: Date,
+    marketCorrectionTime: Date,
 }
 
 export interface databaseQuestion {
     id: number | null,
-    title: string;
-    url: string;
-    aggregator: string;
-    marketProbability: number;
-    userProbability: number;
+    title: string,
+    url: string,
+    slug: string,
+    aggregator: string,
+    marketProbability: number,
+    userProbability: number,
     marketCorrectionTime: Date | null;
     buy: string,
     marketReturn: number,

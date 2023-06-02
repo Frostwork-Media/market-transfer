@@ -5,7 +5,8 @@ import { getMarketBySlug, placeBetBySlug } from '@/lib/api';
 import { floatToPercent, round2SF, extractSlugFromURL } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import DebouncedPercentageInput from './DebouncedPercentageInput';
-import DatePicker from 'react-datepicker';
+import DatePicker from './DatePicker';
+import {userQuestion} from '../lib/types'
 
 export default function BettingTable({tableData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
     console.log("Mounting betting table")
@@ -39,6 +40,19 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
         });
         setUserData(updatedUserData);
     };
+
+    const handleMarketCorrectionTimeChange = (slug, time) => {
+        // Update the user data
+        const updatedUserData = tableData.map((row) => {
+            if (row.slug === slug) {
+                let newRow:userQuestion = row;
+                newRow.marketCorrectionTime = time;
+                return newRow;
+            }
+            return row;
+        });
+        setUserData(updatedUserData);
+    }
 
     const handleDeleteRow = (slug) => {
         const updatedData = [...tableData];
@@ -84,7 +98,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
                     <tr key={row.slug}>
                         <td className="border px-4 py-2 w-32 whitespace-normal">{row.slug}</td>
                         <td className="border px-4 py-2 w-64 whitespace-normal">{row.title}</td>
-                        <td className="border px-4 py-2">{floatToPercent(row.marketP)}</td>
+                        <td className="border px-4 py-2">{floatToPercent(row.marketProbability)}</td>
                         <td className="border px-4 py-2">
                             <DebouncedPercentageInput
                                 slug={row.slug}
@@ -92,15 +106,16 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
                                 onDebouncedChange={handleMyPChange}
                             />
                         </td>
-                        {/* <td className="border px-4 py-2">
+                        <td className="border px-4 py-2">
                             <DatePicker
-                                id="marketCorrectionTime"
+                                id={"market-correction-time"+row.slug}
                                 name="marketCorrectionTime"
-                                selected={marketCorrectionTime}
+                                selected={row.marketCorrectionTime}
+                                slug={row.slug}
                                 onChange={handleMarketCorrectionTimeChange}
                                 className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             />
-                        </td> */}
+                        </td>
                         <td className="border px-4 py-2">{row.buy}</td>
                         {/*<td className="border px-4 py-2">{floatToPercent(row.marketWinChance)}</td>
                         <td className="border px-4 py-2">{floatToPercent(row.myWinChance)}</td>*/}
@@ -108,6 +123,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
                         <td className="border px-4 py-2">{round2SF(row.kellyPerc)}</td>
                         {/*<td className="border px-4 py-2">{round2SF(row.betEVreturn)}</td>*/}
                         <td className="border px-4 py-2">{round2SF(row.rOI)}</td>
+                        <td className="border px-4 py-2">{round2SF(row.rOIOverTime)}</td>
                         <td><LoadingButton passOnClick={() => handleBet(row.slug, row.buy, 100)} buttonText={"Bet M100"} /></td>
                         <td className="border px-4 py-2"><button onClick={() => handleDeleteRow(row.slug)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete</button></td>
                     </tr>
