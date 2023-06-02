@@ -1,11 +1,23 @@
 import DatePicker from 'react-datepicker';
-import { useState, useEffect } from 'react';
 
 export default function Component({id, name, selected, onChange, className}) {
     
-    const handleChange = (date) => {
-        onChange(date); 
-    };
+    const handleMarketCorrectionTimeChange = (slug, time) => {
+        // Update the user data
+        const updatedUserData = tableData.map((row) => {
+            if (row.slug === slug) {
+                let newRow:userQuestion = row;
+                newRow.marketCorrectionTime = time;
+                return newRow;
+            }
+            return row;
+        });
+        setUserData(updatedUserData);
+    }
+
+    const handleChange = (time) => {
+        handleMarketCorrectionTimeChange(slug, time);
+    }
 
     return (
         <DatePicker
