@@ -1,3 +1,4 @@
+import { userQuestion } from '@/lib/types';
 import React, { useState } from 'react';
 
 export default function FileHandler({ dataToSave, loadDataEndpoint }) {
@@ -21,7 +22,14 @@ export default function FileHandler({ dataToSave, loadDataEndpoint }) {
         reader.onload = (event) => {
             if (typeof event.target.result === "string") {
                 const data = JSON.parse(event.target.result);
-                setInputValue(data);
+                const filledInData = data.map((row: userQuestion) => {
+                    // If marketCorrectionTime doesn't exist or isn't a valid Date, create a new one
+                    if (!row.marketCorrectionTime || isNaN(new Date(row.marketCorrectionTime).getTime())) {
+                      row.marketCorrectionTime = new Date();
+                    }
+                    return row;
+                  });
+                setInputValue(filledInData);
             }
         }
         reader.readAsText(file);

@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { addQuestionToDatabase, getMarketBySlug, placeBetBySlug } from '@/lib/api';
-import * as calc from '../lib/probabilityCalculations';
+import {placeBetBySlug } from '@/lib/api';
 import { extractSlugFromURL } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import SearchManifold from './SearchManifold';
@@ -69,6 +68,7 @@ export default function SpreadsheetForm() {
     useEffect(() => {
         console.log("Getting stored data")
         const storedUserData = JSON.parse(window.localStorage.getItem('user-data'));
+        console.log("Stored user data", storedUserData);
         const storedProcessedData = JSON.parse(window.localStorage.getItem('processed-data'));
         const storedApiKey = window.localStorage.getItem('api-key');
         if (storedApiKey) {
@@ -82,10 +82,8 @@ export default function SpreadsheetForm() {
         }
     }, []);
 
-
     useEffect(() => {
-        console.log("Processing data");
-
+        console.log("userData useEffect called");
         if (!userData || userData.length === 0) {
             window.localStorage.removeItem('user-data');
             window.localStorage.removeItem('processed-data');
@@ -93,7 +91,7 @@ export default function SpreadsheetForm() {
             return;
         }
         const seperatedData = seperateData(userData, processedData);
-        console.log("seperateData", seperatedData)
+        console.log("Processing data. Modified data: ", seperatedData.modifiedData, "Unmodified data: ", seperatedData.unmodifiedData);
         processNewAndUpdatedData(seperatedData.modifiedData, seperatedData.unmodifiedData, setProcessedData);
     }, [userData]);
 

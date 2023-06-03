@@ -46,22 +46,17 @@ export const calcBetROI = (betEVreturn, marketWinChance) => {
 }
 
 export const calcBetROIOverTime = (betROI, currentTime, marketCorrectionTime) => {
-    const timeDifference = marketCorrectionTime - currentTime;
+    const timeDifference = marketCorrectionTime.getTime() - currentTime.getTime();
     const timeDifferenceInDays = timeDifference / (1000 * 60 * 60 * 24);
-    return (1+betROI)^(1/timeDifferenceInDays)-1
+    return (1+betROI)**(1/timeDifferenceInDays)-1;
 }
 
-const getAllDatabaseQuestionData = async (): Promise<databaseQuestion> => {
-    const AllQuestions = getQuestionsFromDatabase();
-    return AllQuestions
-} 
-
 const processData = async (userData: userQuestion): Promise<databaseQuestion> => {
-    console.log("Processing data for", userData.slug, userData.userProbability);
     // Fix this
     const currentTime = new Date;
     const response = await getMarketBySlug(userData.slug);
     const marketProbability = parseFloat(response.probability);
+    const marketCorrectionTime = new Date(userData.marketCorrectionTime) || new Date;
     const thingToBuy = buyYes(response.probability, userData.userProbability);
     const marketWinChance = calcMarketWinChance(response.probability, thingToBuy);
     const myWinChance = calcMyWinChance(userData.userProbability, thingToBuy);
@@ -69,7 +64,7 @@ const processData = async (userData: userQuestion): Promise<databaseQuestion> =>
     const kellyBetProportion = calcKellyBetProportion(marketReturn, myWinChance);
     const betEVreturn = calcBetEVreturn(marketWinChance, myWinChance);
     const betROI = calcBetROI(betEVreturn, marketWinChance);
-    const betROIOverTime = calcBetROIOverTime(betROI, currentTime, userData.marketCorrectionTime);
+    const betROIOverTime = calcBetROIOverTime(betROI, currentTime, marketCorrectionTime);
     
     const output: databaseQuestion = {
         id: null,
@@ -79,15 +74,14 @@ const processData = async (userData: userQuestion): Promise<databaseQuestion> =>
         aggregator: "MANIFOLD",
         marketProbability: marketProbability,
         userProbability: userData.userProbability,
-        marketCorrectionTime: new Date(),
+        marketCorrectionTime: marketCorrectionTime,
         buy: thingToBuy ? "YES" : "NO",
         marketReturn: marketReturn,
         kellyPerc: kellyBetProportion,
         rOI: betROI,
-        rOIOverTime: 0,
+        rOIOverTime: betROIOverTime,
         broadQuestionId: null,
     }
-    console.log("Processed Data", output);
 
     return output;
 };
@@ -143,7 +137,7 @@ export const seperateData = (userData, processedData) => {
     const addedData = userData.filter((row) => {
         let isAdded = false;
         
-        if(!oldProcessedData.map((oldrow) => oldrow.id).includes(row.id)||!oldProcessedData.map((oldRow) => oldRow.slug).includes(row.slug)){
+        if(!oldProcessedData.map((oldRow) => oldRow.slug).includes(row.slug)){
             isAdded = true;
         }
         if (isAdded) return true;
@@ -158,8 +152,13 @@ export const seperateData = (userData, processedData) => {
         const probabilityChanged = oldMatchingRow.userProbability !== row.userProbability;
         if (probabilityChanged) return true;
 
+        const marketCorrectionTimeChanged = oldMatchingRow.marketCorrectionTime !== row.marketCorrectionTime;
+        if (marketCorrectionTimeChanged) return true;
+
         return false;
     });
+
+    console.log("updated Data", updatedData);
 
     //All the data that has been removed
     const removedData = oldProcessedData?.filter((row) => !userData.map((row) => row.slug).includes(row.slug));
@@ -172,11 +171,9 @@ export const seperateData = (userData, processedData) => {
     
     const allUnprocessedData = [...addedData, ...updatedData];
 
+    console.log("allUnprocessedData",allUnprocessedData);
+
     return { modifiedData: allUnprocessedData, unmodifiedData: oldDataThatCanStay };
-}
-
-const updateData = (userData, processedData, setProcessedData) => {
-
 }
 
 // const refreshColumnAfterBet = async (slug) => {
@@ -202,56 +199,22 @@ const updateData = (userData, processedData, setProcessedData) => {
 //     setTableData(refreshedData);
 // }
 
-
 export const processNewAndUpdatedData = async (modifiedData, unmodifiedData, setProcessedData) => {
     const newProcessedData = await Promise.all(modifiedData?.map((row) => processData(row)));
 
     const finalData = [...unmodifiedData, ...newProcessedData]
 
-    const sortedData = sortData(finalData, "rOI", "desc");
-    console.log(sortedData);
+    const sortedData = sortData(finalData, "rOIOverTime", "desc");
 
     setProcessedData(sortedData);
 
     try {
         window?.localStorage.setItem('processed-data', JSON.stringify(finalData));
-        const saveUserData = finalData.map((row) => ({ slug: row.slug, userProbability: row.userProbability }));
+        const saveUserData:userQuestion[] = finalData.map((row) => ({ slug: row.slug, url: null, userProbability: row.userProbability, marketCorrectionTime: row.marketCorrectionTime || new Date,}));
+        console.log(saveUserData);
         window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
     } catch (error) {
         console.log(error)
-        alert('Error parsing the pasted data. Please ensure it is in the correct format.');
-    }
-}
-
-export const processAllData = async (modifiedData, unmodifiedData) => {
-    const allData = [...modifiedData, ...unmodifiedData?.map((row) => ({ slug: row.slug, userProbability: row.userProbability }))];
-
-    const newProcessedData = await Promise.all(allData?.map((row) => processData(row)));
-
-    const sortedData = sortData(newProcessedData, "rOI", "desc");
-
-    setProcessedData(sortedData);
-
-    try {
-        window?.localStorage.setItem('processed-data', JSON.stringify(sortedData));
-        const saveUserData = sortedData.map((row) => ({ slug: row.slug, userProbability: row.userProbability }));
-        window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
-        sortedData.forEach( async (data) => {
-            let databaseQuestionData:databaseQuestionData = {
-                title: data.title,
-                url: data.url,
-                marketProbability: data.marketProbability,
-                userProbability: data.userProbability,
-                marketCorrectionTime: null,
-                rOI: data.rOI,
-                aggregator: "MANIFOLD",
-                broadQuestionId: null,
-            }
-            await addQuestionToDatabase(databaseQuestionData);
-    });
-        
-    } catch (error) {
-        console.log(error)
-        alert('Error parsing the pasted data. Please ensure it is in the correct format.');
+        alert('Error processing data. Please ensure it is in the correct format.');
     }
 }

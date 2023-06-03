@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { getMarketBySlug, placeBetBySlug } from '@/lib/api';
-import { floatToPercent, round2SF, extractSlugFromURL } from '@/lib/utils';
+import { floatToPercent, round2SF, round4SF, extractSlugFromURL } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import DebouncedPercentageInput from './DebouncedPercentageInput';
-import DatePicker from './DatePicker';
+import RowDatePicker from './RowDatePicker';
 import {userQuestion} from '../lib/types'
 
 export default function BettingTable({tableData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
-    console.log("Mounting betting table")
+    console.log("Mounting betting table with data", tableData);
 
     const headings = [
             "Slug",
@@ -28,9 +28,12 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
 
     const handleMyPChange = async (slug, value) => {
         // Convert percentage value back to a float between 0 and 1
-        console.log("handleMyPChange: ", slug, value);
         const newUserProbability = parseFloat(value) / 100;
-        const newRow = { slug: slug, userProbability: newUserProbability };
+        const newRow:userQuestion = {
+            slug: slug,
+            url: tableData.find(row => row.slug === slug).url || null,
+            userProbability: newUserProbability, 
+            marketCorrectionTime: tableData.find(row => row.slug === slug).marketCorrectionTime };
         // Update the user data
         const updatedUserData = tableData.map((row) => {
             if (row.slug === slug) {
@@ -71,6 +74,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
     }
 
     return (
+        <div style={{ overflowX: 'auto' }}>
         <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
                 <tr>
@@ -83,10 +87,10 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
 
                 {tableData.map((row) => (
                     <tr key={row.slug}>
-                        <td className="border px-4 py-2 w-32 whitespace-normal">{row.slug}</td>
-                        <td className="border px-4 py-2 w-64 whitespace-normal">{row.title}</td>
+                        <td className="border px-4 py-2 whitespace-normal">{row.slug}</td>
+                        <td className="border px-4 py-2 whitespace-normal"><a href={row.url} target="_blank" rel="noopener noreferrer">{row.title}</a></td>
                         <td className="border px-4 py-2">{floatToPercent(row.marketProbability)}</td>
-                        <td className="border px-4 py-2">
+                        <td className="border w-32 px-4 py-2">
                             <DebouncedPercentageInput
                                 slug={row.slug}
                                 initialValue={row.userProbability * 100}
@@ -94,12 +98,13 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
                             />
                         </td>
                         <td className="border px-4 py-2">
-                            <DatePicker
+                            <RowDatePicker
                                 id={"market-correction-time"+row.slug}
                                 name="marketCorrectionTime"
                                 selected={row.marketCorrectionTime}
                                 slug={row.slug}
-                                onChange={handleMarketCorrectionTimeChange}
+                                setUserData={setUserData}
+                                tableData={tableData}
                                 className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             />
                         </td>
@@ -110,7 +115,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
                         <td className="border px-4 py-2">{round2SF(row.kellyPerc)}</td>
                         {/*<td className="border px-4 py-2">{round2SF(row.betEVreturn)}</td>*/}
                         <td className="border px-4 py-2">{round2SF(row.rOI)}</td>
-                        <td className="border px-4 py-2">{round2SF(row.rOIOverTime)}</td>
+                        <td className="border px-4 py-2">{round4SF(row.rOIOverTime)}</td>
                         <td><LoadingButton passOnClick={() => handleBet(row.slug, row.buy, 100)} buttonText={"Bet M100"} /></td>
                         <td className="border px-4 py-2"><button onClick={() => handleDeleteRow(row.slug)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete</button></td>
                     </tr>
@@ -118,6 +123,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
             </tbody>
 
         </table>
+        >/</div>
 
     )
 }

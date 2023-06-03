@@ -13,7 +13,7 @@ export interface databaseQuestion {
     aggregator: string,
     marketProbability: number,
     userProbability: number,
-    marketCorrectionTime: Date | null;
+    marketCorrectionTime: Date;
     buy: string,
     marketReturn: number,
     kellyPerc: number,

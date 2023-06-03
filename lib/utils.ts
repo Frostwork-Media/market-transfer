@@ -18,6 +18,10 @@ export function round2SF(f: number): number {
   return Math.round(f * 100) / 100;
 }
 
+export function round4SF(f: number): number {
+  return Math.round(f * 10000) / 10000;
+}
+
 export function extractSlugFromURL(url) {
   console.log(url);
   const parts = url.split("/");

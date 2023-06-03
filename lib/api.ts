@@ -1,7 +1,6 @@
 import { databaseQuestion } from "./types";
 
 export function getMarketBySlug(slug) {
-  console.log(`Fetching market with slug ${slug}`);
   return fetch(`https://manifold.markets/api/v0/slug/${slug}`).then(res => res.json());
 }
 
@@ -98,7 +97,6 @@ export async function addQuestionToDatabase(questionData: databaseQuestion) {
     }),
   })
     .then((res) => {
-      console.log('Data Uploaded');
       return res.json();
     })
     .catch((error) => {
@@ -115,7 +113,6 @@ export async function getQuestionsFromDatabase() {
     },
   })
     .then((res) => {
-      console.log('Data retrieved successfully');
       return res.json();
     })
     .catch((error) => {
