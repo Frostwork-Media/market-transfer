@@ -3,9 +3,9 @@ import prisma from '../../../lib/prisma';
 // NEED TO USE API PAGE ROUTE DUE TO CORS LIMITATIONS ON CLIENT SIDE
 
 export async function GET(request: Request) {
-    const questions = await prisma.question.findMany()
+    // // const questions = await prisma.question.findMany()
     
-    console.log(questions)
+    // console.log(questions)
 
-    return NextResponse.json(questions)
+    // return NextResponse.json(questions)
 }
