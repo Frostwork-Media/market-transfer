@@ -8,12 +8,12 @@ export default function Component({defaultKey = null, onChange, keyName}) {
         if (storedKey) {
             setApiKey(storedKey)
         }
-    }, [])
+    }, [keyName])
 
     useEffect(() => {
         onChange(apiKey)
         window.localStorage.setItem(keyName, apiKey)
-    }, [apiKey])
+    }, [apiKey, keyName, onChange])
 
     const handleAPIKeyChange = (event) => {
         setApiKey(event.target.value);
