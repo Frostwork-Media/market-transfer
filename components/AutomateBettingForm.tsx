@@ -192,7 +192,7 @@ export default function SpreadsheetForm() {
 
                     <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
 
-                    <ApiKeyInput onChange={handleApiChange} keyName = "manifold-api-key" />
+                    <ApiKeyInput onChange={handleApiChange} keyName="manifold" />
 
                     <LoadingButton passOnClick={() => autobet(500)} buttonText={"Autobet 500"} /><LoadingButton passOnClick={handleRefreshData} buttonText={"Refresh table"} />
 

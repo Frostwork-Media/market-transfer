@@ -123,7 +123,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
             </tbody>
 
         </table>
-        >/</div>
+        </div>
 
     )
 }
