@@ -4,10 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 const pages = [
   { name: 'Automate Betting', href: '/' },
-  { name: 'Market Creator', href: '/market-creator' },
-  { name: 'Market Mover', href: '/market-mover' },
-  { name: 'GPT4Casting', href: '/gpt4casting' },
-  { name: 'EML', href: 'https://engage-mazurka-lutanist.vercel.app/' },
+  { name: 'Probability Graph', href: 'https://probability-graph.predictionlab.org/' },
 ];
 
 export default function Navbar() {
