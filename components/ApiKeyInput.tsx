@@ -1,19 +1,14 @@
 import { useState, useEffect } from 'react';
 
-export default function Component({defaultKey = null, onChange, keyName}) {
-    const [apiKey, setApiKey] = useState(defaultKey || '')
+export default function Component({defaultKey = null, keyName}) {
+    const [apiKey, setApiKey] = useState(() => {
+        const storedKey = window.localStorage.getItem(keyName);
+        return storedKey || defaultKey || '';
+    });
 
     useEffect(() => {
-        const storedKey = window?.localStorage.getItem(keyName)
-        if (storedKey) {
-            setApiKey(storedKey)
-        }
-    }, [keyName])
-
-    useEffect(() => {
-        onChange(apiKey)
-        window.localStorage.setItem(keyName, apiKey)
-    }, [apiKey, keyName, onChange])
+        window.localStorage.setItem(keyName, apiKey);
+    }, [apiKey, keyName]);
 
     const handleAPIKeyChange = (event) => {
         setApiKey(event.target.value);
@@ -29,5 +24,4 @@ export default function Component({defaultKey = null, onChange, keyName}) {
         onChange={handleAPIKeyChange}
     />
     );
-
 }

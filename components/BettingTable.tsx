@@ -8,7 +8,7 @@ import DebouncedPercentageInput from './DebouncedPercentageInput';
 import RowDatePicker from './RowDatePicker';
 import {userQuestion} from '../lib/types'
 
-export default function BettingTable({tableData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
+export default function BettingTable({tableData, setTableData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
     console.log("Mounting betting table with data", tableData);
 
     const headings = [
@@ -65,7 +65,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
             .then(() => {
                 addBetsDoneData(slug, outcomeToBuy, amountToPay);
                 console.log("Bet placed successfully on ", slug, outcomeToBuy, amountToPay);
-                refreshColumnAfterBet(slug)
+                refreshColumnAfterBet(slug, tableData, setTableData);
             })
             .catch((error) => {
                 console.log(error)

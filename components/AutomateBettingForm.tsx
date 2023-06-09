@@ -118,10 +118,6 @@ export default function SpreadsheetForm() {
         setMarketProb(event.target.value)
     }
 
-    const handleApiChange = (key) => {
-      setApiKey(key);
-    }
-
     const handleRefreshData = async () => {
         console.log("Refreshing data");
     }
@@ -192,7 +188,11 @@ export default function SpreadsheetForm() {
 
                     <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
 
-                    <ApiKeyInput onChange={handleApiChange} keyName="manifold" />
+                    <ApiKeyInput keyName="manifold" />
+
+                    <label htmlFor="database-key" className="block text-sm font-medium text-gray-700">Database key</label>
+
+                    <ApiKeyInput keyName="database" />
 
                     <LoadingButton passOnClick={() => autobet(500)} buttonText={"Autobet 500"} /><LoadingButton passOnClick={handleRefreshData} buttonText={"Refresh table"} />
 
@@ -207,7 +207,7 @@ export default function SpreadsheetForm() {
                 </div>
             </div>
             <div className="my-4">
-                <BettingTable userData={userData} tableData={processedData} setUserData={setUserData} apiKey={apiKey} addBetsDoneData={addBetsDoneData} refreshColumnAfterBet={refreshColumnAfterBet}/>
+                <BettingTable userData={userData} tableData={processedData} setTableData={setProcessedData} setUserData={setUserData} apiKey={apiKey} addBetsDoneData={addBetsDoneData} refreshColumnAfterBet={refreshColumnAfterBet}/>
             </div>
         </div>
     );

@@ -176,28 +176,27 @@ export const seperateData = (userData, processedData) => {
     return { modifiedData: allUnprocessedData, unmodifiedData: oldDataThatCanStay };
 }
 
-// const refreshColumnAfterBet = async (slug) => {
-//     const updatedProcessedData = await Promise.all(
-//       processedData.map(async (row) => {
-//         if (row.slug === slug) {
-//           return await processData({ slug: row.slug, userProbability: row.userProbability });
-//         } else {
-//           return row;
-//         }
-//       })
-//     );
-//     console.log("Refreshed data", updatedProcessedData);
-//     const sortedProcessedData = sortData(updatedProcessedData, 'rOI', 'desc');
-//     setProcessedData(sortedProcessedData);
-//     console.log("processedData", processedData);
-//   };
 
-// const handleRefreshData = async (userData,setTableData) => {
-//     const processedData = getAllDatabaseQuestionData();
-//     const { modifiedData, unmodifiedData } = seperateData(userData, processedData);
-//     const refreshedData = await processAllData(unmodifiedData, modifiedData);
-//     setTableData(refreshedData);
-// }
+export const refreshColumnAfterBet = async (slug, processedData, setProcessedData) => {
+    const updatedProcessedData = await Promise.all(
+      processedData.map(async (row) => {
+        if (row.slug === slug) {
+          return await processData({
+            slug: row.slug,
+            url: row.url,
+            userProbability: row.userProbability,
+            marketCorrectionTime: row.marketCorrectionTime, 
+        });
+        } else {
+          return row;
+        }
+      })
+    );
+    console.log("Refreshed data", updatedProcessedData);
+    const sortedProcessedData = sortData(updatedProcessedData, 'rOI', 'desc');
+    setProcessedData(sortedProcessedData);
+    console.log("processedData", processedData);
+  };
 
 export const processNewAndUpdatedData = async (modifiedData, unmodifiedData, setProcessedData) => {
     const newProcessedData = await Promise.all(modifiedData?.map((row) => processData(row)));
