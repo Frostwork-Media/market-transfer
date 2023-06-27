@@ -120,3 +120,59 @@ export async function getQuestionsFromDatabase() {
       throw error;
     });
 }
+
+export async function setManifoldApiKey(apiKey: string){
+  if(typeof window === 'undefined') return console.error('No window object found')
+  return window.localStorage.setItem('manifold-api-key', apiKey)
+}
+
+export function getManifoldApiKey(){
+  if(typeof window === 'undefined') return console.error('No window object found')
+  return window.localStorage.getItem('manifold-api-key')
+}
+
+export function setProcessedDataStore(data){
+  if(typeof window === 'undefined') return console.error('No window object found')
+
+  // do validation here
+
+  return window.localStorage.setItem('processed-data', JSON.stringify(data))
+}
+
+export function getProcessedDataStore(){
+  if(typeof window === 'undefined') return console.error('No window object found')
+  let data = JSON.parse(window.localStorage.getItem('processed-data'))
+
+  // do validation here
+
+  return data
+}
+
+export function deleteProcessedDataStore(){
+  if(typeof window === 'undefined') return console.error('No window object found')
+  return window.localStorage.removeItem('processed-data')
+}
+
+export function setUserDataStore(data){
+  if(typeof window === 'undefined') return console.error('No window object found')
+
+  // do validation here
+  console.log(data)
+
+  return window.localStorage.setItem('user-data', JSON.stringify(data))
+}
+
+export function getUserDataStore(){
+  if(typeof window === 'undefined') return console.error('No window object found')
+  const data = JSON.parse(window.localStorage.getItem('user-data'))
+
+  // do validation here
+  console.log(data)
+
+  return data
+}
+
+export function deleteUserDataStore(){
+  if(typeof window === 'undefined') return console.error('No window object found')
+  return window.localStorage.removeItem('user-data')
+}
