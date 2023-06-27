@@ -1,4 +1,5 @@
 import { databaseQuestion } from "./types";
+import { validateEntries } from "./utils";
 
 export function getMarketBySlug(slug) {
   return fetch(`https://manifold.markets/api/v0/slug/${slug}`).then(res => res.json());
@@ -154,10 +155,7 @@ export function deleteProcessedDataStore(){
 }
 
 export function setUserDataStore(data){
-  if(typeof window === 'undefined') return console.error('No window object found')
-
-  // do validation here
-  console.log(data)
+  if(typeof window === 'undefined') return console.error('No window object found') 
 
   return window.localStorage.setItem('user-data', JSON.stringify(data))
 }
@@ -166,10 +164,11 @@ export function getUserDataStore(){
   if(typeof window === 'undefined') return console.error('No window object found')
   const data = JSON.parse(window.localStorage.getItem('user-data'))
 
-  // do validation here
-  console.log(data)
+  const validatedData = validateEntries(data);
 
-  return data
+  console.log("validated data:", validatedData);
+
+  return validatedData;
 }
 
 export function deleteUserDataStore(){

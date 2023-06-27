@@ -7,13 +7,14 @@ import LoadingButton from './LoadingButton';
 import DebouncedPercentageInput from './DebouncedPercentageInput';
 import RowDatePicker from './RowDatePicker';
 import {userQuestion} from '../lib/types'
+import { AggregatorEnum } from '@prisma/client';
 
 export default function BettingTable({tableData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
     console.log("Mounting betting table with data", tableData);
 
     const headings = [
-            "Slug",
             "Title",
+            "Aggregator",
             "Mrkt %",
             "My %",
             "Market Correction",
@@ -33,7 +34,10 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
             slug: slug,
             url: tableData.find(row => row.slug === slug).url || null,
             userProbability: newUserProbability, 
-            marketCorrectionTime: tableData.find(row => row.slug === slug).marketCorrectionTime };
+            correctionTime: tableData.find(row => row.slug === slug).correctionTime,
+            aggregator: tableData.find(row => row.slug === slug).aggregator, 
+        };
+            
         // Update the user data
         const updatedUserData = tableData.map((row) => {
             if (row.slug === slug) {
@@ -87,8 +91,8 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
 
                 {tableData.map((row) => (
                     <tr key={row.slug}>
-                        <td className="border px-4 py-2 whitespace-normal">{row.slug}</td>
                         <td className="border px-4 py-2 whitespace-normal"><a href={row.url} target="_blank" rel="noopener noreferrer">{row.title}</a></td>
+                        <td className="border px-4 py-2">{row.aggregator}</td>
                         <td className="border px-4 py-2">{floatToPercent(row.marketProbability)}</td>
                         <td className="border w-32 px-4 py-2">
                             <DebouncedPercentageInput
@@ -100,8 +104,8 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
                         <td className="border px-4 py-2">
                             <RowDatePicker
                                 id={"market-correction-time"+row.slug}
-                                name="marketCorrectionTime"
-                                selected={row.marketCorrectionTime}
+                                name="correctionTime"
+                                selected={row.correctionTime}
                                 slug={row.slug}
                                 setUserData={setUserData}
                                 tableData={tableData}

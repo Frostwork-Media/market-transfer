@@ -1,11 +1,10 @@
 import { promises } from "dns";
-import {userQuestion, databaseQuestion } from "./types"
+import {frontendQuestion, userQuestion} from "./types"
 import { addQuestionToDatabase, getMarketBySlug, getMarketByUrl, getQuestionsFromDatabase, placeBetBySlug } from '@/lib/api';
 
 export const buyYes = (marketProbability, myProbability ) => {
+    console.log(marketProbability, myProbability);
     if(typeof marketProbability !== 'number' || typeof myProbability !== 'number')
-        throw 'marketProbability and myProbability must be numbers';
-    
     return marketProbability <= myProbability;
 }
 
@@ -51,12 +50,12 @@ export const calcBetROIOverTime = (betROI, currentTime, marketCorrectionTime) =>
     return (1+betROI)**(1/timeDifferenceInDays)-1;
 }
 
-const processData = async (userData: userQuestion): Promise<databaseQuestion> => {
+const processData = async (userData: userQuestion) => {
     // Fix this
     const currentTime = new Date;
     const response = await getMarketBySlug(userData.slug);
     const marketProbability = parseFloat(response.probability);
-    const marketCorrectionTime = new Date(userData.marketCorrectionTime) || new Date;
+    const correctionTime = new Date(userData.correctionTime) || new Date;
     const thingToBuy = buyYes(response.probability, userData.userProbability);
     const marketWinChance = calcMarketWinChance(response.probability, thingToBuy);
     const myWinChance = calcMyWinChance(userData.userProbability, thingToBuy);
@@ -64,23 +63,21 @@ const processData = async (userData: userQuestion): Promise<databaseQuestion> =>
     const kellyBetProportion = calcKellyBetProportion(marketReturn, myWinChance);
     const betEVreturn = calcBetEVreturn(marketWinChance, myWinChance);
     const betROI = calcBetROI(betEVreturn, marketWinChance);
-    const betROIOverTime = calcBetROIOverTime(betROI, currentTime, marketCorrectionTime);
+    const betROIOverTime = calcBetROIOverTime(betROI, currentTime, correctionTime);
     
-    const output: databaseQuestion = {
-        id: null,
+    const output:frontendQuestion = {
         title: response.question,
         slug: userData.slug,
         url: userData.url,
-        aggregator: "MANIFOLD",
+        aggregator: userData.aggregator,
         marketProbability: marketProbability,
         userProbability: userData.userProbability,
-        marketCorrectionTime: marketCorrectionTime,
+        correctionTime: correctionTime,
         buy: thingToBuy ? "YES" : "NO",
         marketReturn: marketReturn,
         kellyPerc: kellyBetProportion,
         rOI: betROI,
         rOIOverTime: betROIOverTime,
-        broadQuestionId: null,
     }
 
     return output;

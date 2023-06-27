@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {placeBetBySlug } from '@/lib/api';
-import { extractSlugFromURL } from '@/lib/utils';
+import {getUserDataStore, getProcessedDataStore, placeBetBySlug, setProcessedDataStore, setUserDataStore } from '@/lib/api';
+import { extractSlugFromURL, validateEntries } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import SearchManifold from './SearchManifold';
 import BettingTable from './BettingTable';
@@ -23,11 +23,11 @@ export default function SpreadsheetForm() {
     const [prob, setMarketProb] = useState(50);
     const [userData, setUserData] = useState<userQuestion[]>([]);
     const [processedData, setProcessedData] = useState<frontendQuestion[]>([]);
+    const [activeTab, setActiveTab] = useState('manifold');
+    const [correctionTime, setCorrectionTime] = useState(new Date());
 
-    const [marketCorrectionTime, setMarketCorrectionTime] = useState(new Date());
-
-    const handleMarketCorrectionTimeChange = (date) => {
-        setMarketCorrectionTime(date);
+    const handleCorrectionTimeChange = (date) => {
+        setCorrectionTime(date);
     };
 
     const addBetsDoneData = async (slug, outcomeToBuy, amountToPay) => {
@@ -66,19 +66,17 @@ export default function SpreadsheetForm() {
     };
 
     useEffect(() => {
-        console.log("Getting stored data")
-        const storedUserData = JSON.parse(window.localStorage.getItem('user-data'));
-        console.log("Stored user data", storedUserData);
-        const storedProcessedData = JSON.parse(window.localStorage.getItem('processed-data'));
+        const storedUserData = getUserDataStore();
+        const storedProcessedData = getProcessedDataStore();
         const storedApiKey = window.localStorage.getItem('api-key');
         if (storedApiKey) {
             setApiKey(storedApiKey);
         }
 
         if (storedUserData) {
-            setUserData(storedUserData);
-        } else if (storedProcessedData) {
-            setProcessedData(storedProcessedData);
+            setUserDataStore(storedUserData);
+        } else if(storedProcessedData){
+            setProcessedDataStore(storedProcessedData);
         }
     }, []);
 
@@ -90,7 +88,8 @@ export default function SpreadsheetForm() {
             setProcessedData([]);
             return;
         }
-        const seperatedData = seperateData(userData, processedData);
+        const validatedData = validateEntries(userData);
+        const seperatedData = seperateData(validatedData, processedData);
         console.log("Processing data. Modified data: ", seperatedData.modifiedData, "Unmodified data: ", seperatedData.unmodifiedData);
         processNewAndUpdatedData(seperatedData.modifiedData, seperatedData.unmodifiedData, setProcessedData);
     }, [userData]);
@@ -103,7 +102,8 @@ export default function SpreadsheetForm() {
                     slug: marketSlug,
                     url: null,
                     userProbability: +prob / 100,
-                    marketCorrectionTime: marketCorrectionTime,
+                    correctionTime: correctionTime,
+                    aggregator: "MANIFOLD",
                 }
                     , ...userData];
             setUserData(updatedUserData);
@@ -152,49 +152,97 @@ export default function SpreadsheetForm() {
         <div className="w-full">
             <div className="my-4 flex justify-center">
                 <div className="my-4 w-1/2">
-                    <FileHandler dataToSave={userData} loadDataEndpoint={setUserData} />
-                    
-                    <label htmlFor="market-search" className="block text-sm font-medium text-gray-700">Search markets to autofill:</label>
+                    <div className="w-full">
+                        <div className="border-b border-gray-200">
+                            <nav className="-mb-px flex" aria-label="Tabs">
+                                <button
+                                    onClick={() => setActiveTab('upload')}
+                                    className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm ${activeTab === 'upload' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    Upload Data
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('manifold')}
+                                    className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm ${activeTab === 'manifold' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >    Manifold
+                                </button>
+                                <button
+                                    onClick={null}
+                                    className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm ${activeTab === 'personal' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >    Personal (Coming soon)
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('autobet')}
+                                    className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm ${activeTab === 'personal' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >    Autobet
+                                </button>
+                            </nav>
+                        </div>
+                        {activeTab === 'upload' && (
+                            <div className="p-4">
+                                <FileHandler dataToSave={userData} loadDataEndpoint={setUserData} />
+                            </div>
+                        )}
+                        {activeTab === 'advanced' && (
+                            <div className="p-4">
+                                <label htmlFor="market-search" className="block text-sm font-medium text-gray-700">
+                                    Search markets to autofill:
+                                </label>
 
-                    <SearchManifold handleSelect={handleSearchSelect} processedData={processedData} />
+                                <SearchManifold handleSelect={handleSearchSelect} processedData={processedData} />
 
-                    <label htmlFor="market_slug" className="block text-sm font-medium text-gray-700">Slug:</label>
+                                <label htmlFor="market_slug" className="block text-sm font-medium text-gray-700">
+                                    Slug:
+                                </label>
 
-                    <input
-                        id="market_slug"
-                        name="market_slug"
-                        className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value={marketSlug}
-                        onChange={handleSlugInput}
-                    />
+                                <input
+                                    id="market_slug"
+                                    name="market_slug"
+                                    className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    value={marketSlug}
+                                    onChange={handleSlugInput}
+                                />
+                                <label htmlFor="market_prob" className="block text-sm font-medium text-gray-700">
+                                    Probability (percentage):
+                                </label>
 
-                    <label htmlFor="market_slug" className="block text-sm font-medium text-gray-700">Probability (percentage):</label>
+                                <input
+                                    id="market_prob"
+                                    name="market_prob"
+                                    className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    value={prob}
+                                    onChange={handleProbInput}
+                                />
 
-                    <input
-                        id="market_prob"
-                        name="market_prob"
-                        className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value={prob}
-                        onChange={handleProbInput}
-                    />
+                                <label htmlFor="correction-time" className="block text-sm font-medium text-gray-700">
+                                    User Estimate of Market Correction Time:
+                                </label>
 
-                    <label htmlFor="market-correction-date" className="block text-sm font-medium text-gray-700">Market correction date:</label>
+                                <DatePicker
+                                    id="correction-time"
+                                    name="correctionTime"
+                                    selected={correctionTime}
+                                    onChange={handleCorrectionTimeChange}
+                                    className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                />
 
-                    <DatePicker
-                        id="market-correction-time"
-                        name="marketCorrectionTime"
-                        selected={marketCorrectionTime}
-                        onChange={handleMarketCorrectionTimeChange}
-                        className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
+                                <LoadingButton passOnClick={addToTable} buttonText={"Add to table"} />
+                            </div>
+                        )}
+                        {activeTab === 'autobet' && (
 
-                    <LoadingButton passOnClick={addToTable} buttonText={"Add to table"} />
+                            <LoadingButton passOnClick={() => autobet(500)} buttonText={"Autobet 500"} />
 
-                    <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
+                        )}
+                    </div>
 
                     <ApiKeyInput onChange={handleApiChange} keyName="manifold" />
-
-                    <LoadingButton passOnClick={() => autobet(500)} buttonText={"Autobet 500"} /><LoadingButton passOnClick={handleRefreshData} buttonText={"Refresh table"} />
+                    
+                    <LoadingButton passOnClick={handleRefreshData} buttonText={"Refresh table"} />
 
                     <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Bets done:</label>
 
