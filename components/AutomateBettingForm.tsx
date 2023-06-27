@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {placeBetBySlug } from '@/lib/api';
+import {addQuestionToDatabase, placeBetBySlug } from '@/lib/api';
 import { extractSlugFromURL } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import SearchManifold from './SearchManifold';
@@ -17,17 +17,18 @@ import 'react-datepicker/dist/react-datepicker.css';
 
 export default function SpreadsheetForm() {
 
-    const [apiKey, setApiKey] = useState("");
+    const manifoldApiKey = process.env.NEXT_NEXT_PUBLIC_MANIFOLD_API_KEY;
+    const databaseApiKey =  process.env.DATABASE_URL;
     const [betsDoneData, setBetsDoneData] = useState([]);
     const [marketSlug, setMarketSlug] = useState("");
     const [prob, setMarketProb] = useState(50);
     const [userData, setUserData] = useState<userQuestion[]>([]);
     const [processedData, setProcessedData] = useState<frontendQuestion[]>([]);
 
-    const [marketCorrectionTime, setMarketCorrectionTime] = useState(new Date());
+    const [correctionTime, setCorrectionTime] = useState(new Date());
 
     const handleMarketCorrectionTimeChange = (date) => {
-        setMarketCorrectionTime(date);
+        setCorrectionTime(date);
     };
 
     const addBetsDoneData = async (slug, outcomeToBuy, amountToPay) => {
@@ -46,7 +47,7 @@ export default function SpreadsheetForm() {
         for (let i = 0; i < amount; i = i + 100) {
             console.log("Bet at", i);
 
-            await placeBetBySlug(apiKey, processedData[0].slug, 100, processedData[0].buy)
+            await placeBetBySlug(manifoldApiKey, processedData[0].slug, 100, processedData[0].buy)
                 .then(async () => {
                     await addBetsDoneData(processedData[0].slug, processedData[0].buy, 100);
                     console.log("Bet placed successfully on ", processedData[0].slug, 100, processedData[0].buy);
@@ -70,11 +71,6 @@ export default function SpreadsheetForm() {
         const storedUserData = JSON.parse(window.localStorage.getItem('user-data'));
         console.log("Stored user data", storedUserData);
         const storedProcessedData = JSON.parse(window.localStorage.getItem('processed-data'));
-        const storedApiKey = window.localStorage.getItem('api-key');
-        if (storedApiKey) {
-            setApiKey(storedApiKey);
-        }
-
         if (storedUserData) {
             setUserData(storedUserData);
         } else if (storedProcessedData) {
@@ -103,7 +99,7 @@ export default function SpreadsheetForm() {
                     slug: marketSlug,
                     url: null,
                     userProbability: +prob / 100,
-                    marketCorrectionTime: marketCorrectionTime,
+                    correctionTime: correctionTime,
                 }
                     , ...userData];
             setUserData(updatedUserData);
@@ -132,10 +128,6 @@ export default function SpreadsheetForm() {
         console.log("Getting stored data")
         const storedUserData = JSON.parse(window.localStorage.getItem('user-data'));
         const storedtableData = JSON.parse(window.localStorage.getItem('processed-data'));
-        const storedApiKey = window.localStorage.getItem('api-key');
-        if (storedApiKey) {
-            setApiKey(storedApiKey);
-        }
     
         if (storedUserData) {
             setUserData(storedUserData);
@@ -144,12 +136,33 @@ export default function SpreadsheetForm() {
         }
     }, []);
 
+    const saveToDatabase = async () => {
+        console.log("Saving to database");
+
+        for(const data of userData) {
+            const dataToSave = {
+                id: null,
+                slug: data.slug,
+                url: data.url,
+                userProbability: data.userProbability,  
+                correctionTime: data.correctionTime,
+                aggregator: "manifold",
+                broadQuestionId : 1,
+            }
+            addQuestionToDatabase(dataToSave);
+        }
+    }
+
     return (
         <div className="w-full">
             <div className="my-4 flex justify-center">
                 <div className="my-4 w-1/2">
                     <FileHandler dataToSave={userData} loadDataEndpoint={setUserData} />
                     
+                    <label htmlFor="market-search" className="block text-sm font-medium text-gray-700">Save to database:</label>
+
+                    <LoadingButton passOnClick={saveToDatabase} buttonText={"Save to database"} />
+
                     <label htmlFor="market-search" className="block text-sm font-medium text-gray-700">Search markets to autofill:</label>
 
                     <SearchManifold handleSelect={handleSearchSelect} processedData={processedData} />
@@ -178,25 +191,17 @@ export default function SpreadsheetForm() {
 
                     <DatePicker
                         id="market-correction-time"
-                        name="marketCorrectionTime"
-                        selected={marketCorrectionTime}
+                        name="correctionTime"
+                        selected={correctionTime}
                         onChange={handleMarketCorrectionTimeChange}
                         className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
 
                     <LoadingButton passOnClick={addToTable} buttonText={"Add to table"} />
 
-                    <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">API key (for auto betting)</label>
-
-                    <ApiKeyInput keyName="manifold" />
-
-                    <label htmlFor="database-key" className="block text-sm font-medium text-gray-700">Database key</label>
-
-                    <ApiKeyInput keyName="database" />
-
                     <LoadingButton passOnClick={() => autobet(500)} buttonText={"Autobet 500"} /><LoadingButton passOnClick={handleRefreshData} buttonText={"Refresh table"} />
 
-                    <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Bets done:</label>
+                    <label htmlFor="bets-done" className="block text-sm font-medium text-gray-700">Bets done:</label>
 
                     <BetsDoneTextArea betsDoneData={betsDoneData} />
 
@@ -207,7 +212,7 @@ export default function SpreadsheetForm() {
                 </div>
             </div>
             <div className="my-4">
-                <BettingTable userData={userData} tableData={processedData} setTableData={setProcessedData} setUserData={setUserData} apiKey={apiKey} addBetsDoneData={addBetsDoneData} refreshColumnAfterBet={refreshColumnAfterBet}/>
+                <BettingTable userData={userData} tableData={processedData} setTableData={setProcessedData} setUserData={setUserData} apiKey={manifoldApiKey} addBetsDoneData={addBetsDoneData} refreshColumnAfterBet={refreshColumnAfterBet}/>
             </div>
         </div>
     );

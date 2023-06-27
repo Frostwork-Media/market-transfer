@@ -14,12 +14,10 @@ export async function POST(
     try {
         const newQuestion = await prisma.question.create({
             data: {
-                title: questionData.title,
+                slug: questionData.title,
                 url: questionData.url,
-                marketProbability: questionData.marketProbability,
                 userProbability: questionData.userProbability,
                 marketCorrectionTime: questionData.marketCorrectionTime,
-                rOI: questionData.rOI,
                 aggregator: 'MANIFOLD',
                 broadQuestionId: questionData.broadQuestionId,
             }
