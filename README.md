@@ -9,6 +9,12 @@ House rules:
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## What is this
+
+I want to be able to put my whole portfolio of estimates somewhere and have a process that tells me what to bet on. And, ideally, does much of that betting form me.
+
+If I say I think biden is 90% to win the dem nominee I want it to tell me how that compares to other things I think and how much I should bet, at maximum.
+
 ## Getting Started
 
 First, run the development server:
