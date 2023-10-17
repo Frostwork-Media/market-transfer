@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server';
-import prisma from '../../../lib/prisma';
-// NEED TO USE API PAGE ROUTE DUE TO CORS LIMITATIONS ON CLIENT SIDE
+import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
-    // // const questions = await prisma.question.findMany()
-    
-    // console.log(questions)
-
-    // return NextResponse.json(questions)
+export async function GET(req: NextRequest) {
+  try {
+    const questions = await prisma.question.findMany();    
+    return NextResponse.json(questions);
+  } catch (error) {
+    console.error("Error fetching questions:", error);
+    throw error;
+  }
 }

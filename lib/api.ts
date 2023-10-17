@@ -1,6 +1,7 @@
 import { databaseQuestion } from "./types";
 import { validateEntries } from "./utils";
 
+
 export function getMarketBySlug(slug) {
   return fetch(`https://manifold.markets/api/v0/slug/${slug}`).then(res => res.json());
 }
@@ -80,7 +81,7 @@ export function getMarketsByGroupID(groupID) {
   return fetch(`https://manifold.markets/api/v0/group/${groupID}`).then(res => res.json());
 }
 
-export async function addQuestionToDatabase(questionData: databaseQuestion) {
+export async function sendQuestionsToDatabase(questionData: databaseQuestion) {
   return fetch('/api/add-to-db',{
     method: 'POST',
     headers: {
@@ -106,20 +107,25 @@ export async function addQuestionToDatabase(questionData: databaseQuestion) {
     });
 }
 
-export async function getQuestionsFromDatabase() {
-  return fetch('/api/questions', {
+export function getQuestionsFromDatabase() {
+  console.log('Getting questions from database');
+  return fetch('/api/get-from-db', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
   })
-    .then((res) => {
-      return res.json();
-    })
-    .catch((error) => {
-      console.error('Error fetching questions from database:', error.message);
-      throw error;
-    });
+  .then(res => {
+    if (!res.ok) {
+      throw new Error('Network response was not ok');
+    }
+    //parse this json
+    return res;
+  })
+  .catch(error => {
+    console.error('Error fetching questions from database:', error.message);
+    throw error;
+  });
 }
 
 export async function setManifoldApiKey(apiKey: string){

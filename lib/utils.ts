@@ -84,3 +84,14 @@ export function validateEntries(entries: userQuestion[]) {
   console.log("validated data: ", validdatedData);
   return validdatedData;
 }
+
+export function mapToDatabaseQuestion (question) {
+  return {
+    slug: question.slug,
+    url: question.url,
+    userProbability: question.userProbability,
+    correctionTime: question.correctionTime,
+    broadQuestionId: question.broadQuestionId,
+    aggregator: question.aggregator
+  }
+}

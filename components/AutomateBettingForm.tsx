@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {getUserDataStore, getProcessedDataStore, placeBetBySlug, setProcessedDataStore, setUserDataStore } from '@/lib/api';
-import { extractSlugFromURL, validateEntries } from '@/lib/utils';
+import {getUserDataStore, getProcessedDataStore, placeBetBySlug, setProcessedDataStore, setUserDataStore, getQuestionsFromDatabase, sendQuestionsToDatabase } from '@/lib/api';
+import { extractSlugFromURL, validateEntries, mapToDatabaseQuestion } from '@/lib/utils';
 import LoadingButton from './LoadingButton';
 import SearchManifold from './SearchManifold';
 import BettingTable from './BettingTable';
@@ -58,7 +58,6 @@ export default function SpreadsheetForm() {
                 });
         }
     }
-
    
     const handleSearchSelect = async (market) => {
         setMarketSlug(extractSlugFromURL(market.url));
@@ -66,18 +65,19 @@ export default function SpreadsheetForm() {
     };
 
     useEffect(() => {
-        const storedUserData = getUserDataStore();
-        const storedProcessedData = getProcessedDataStore();
+        console.log("Getting stored data");
+        const fetchData = async () => {
+            let response = await getQuestionsFromDatabase();
+            const results = await response.json();
+            return results;
+        }
+        fetchData().then(data => data ? setUserData(data) : null );
         const storedApiKey = window.localStorage.getItem('api-key');
+
         if (storedApiKey) {
             setApiKey(storedApiKey);
         }
-
-        if (storedUserData) {
-            setUserDataStore(storedUserData);
-        } else if(storedProcessedData){
-            setProcessedDataStore(storedProcessedData);
-        }
+    
     }, []);
 
     useEffect(() => {
@@ -92,6 +92,11 @@ export default function SpreadsheetForm() {
         const seperatedData = seperateData(validatedData, processedData);
         console.log("Processing data. Modified data: ", seperatedData.modifiedData, "Unmodified data: ", seperatedData.unmodifiedData);
         processNewAndUpdatedData(seperatedData.modifiedData, seperatedData.unmodifiedData, setProcessedData);
+        let databaseQuestions = [];
+        for (const data of processedData) {
+            databaseQuestions.push(mapToDatabaseQuestion(data));
+        }
+        sendQuestionsToDatabase(databaseQuestions);
     }, [userData]);
 
     const addToTable = (event) => {
@@ -131,22 +136,6 @@ export default function SpreadsheetForm() {
         const updatedUserData: userQuestion[] = userData.filter((m) => m.url !== slug);
         setUserData(updatedUserData);
     }
-
-    useEffect(() => {
-        console.log("Getting stored data")
-        const storedUserData = JSON.parse(window.localStorage.getItem('user-data'));
-        const storedtableData = JSON.parse(window.localStorage.getItem('processed-data'));
-        const storedApiKey = window.localStorage.getItem('api-key');
-        if (storedApiKey) {
-            setApiKey(storedApiKey);
-        }
-    
-        if (storedUserData) {
-            setUserData(storedUserData);
-        } else if (storedtableData) {
-            setProcessedData(storedtableData);
-        }
-    }, []);
 
     return (
         <div className="w-full">

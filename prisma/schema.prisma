@@ -1,45 +1,36 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
   relationMode = "prisma"
 }
 
-model Test {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model Question {
-  id                      Int     @id @default(autoincrement())
-  title                   String
-  url                     String
-  marketProbability       Float
-  userProbability         Float
-  marketCorrectionTime    DateTime
-  rOI                     Float
-  aggregator              AggregatorEnum
-  broadQuestionId         Int?         
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                   Int                 @id @default(autoincrement())
+  slug                 String
+  url                  String
+  userProbability      Float
+  marketCorrectionTime DateTime
+  aggregator           Question_aggregator
+  broadQuestionId      Int?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 }
 
-model BroadQuestion{
-  id        Int     @id @default(autoincrement())
-  title     String
+model BroadQuestion {
+  id    Int    @id @default(autoincrement())
+  title String
 }
 
-enum AggregatorEnum{
+enum Question_aggregator {
   MANIFOLD
   METACULUS
   POLYMARKET
   STOCKS
+  INSIGHT
+  SMALLBET
+  PERSONAL
 }
