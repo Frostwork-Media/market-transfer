@@ -1,8 +1,10 @@
+import { Question } from "@prisma/client"
+
 export interface frontendQuestion {
     title: string,
     url: string,
     slug: string,
-    aggregator: "MANIFOLD" | "AIRTABLE" | "METACULUS" | "PERSONAL" | "STOCK",
+    aggregator: Question["aggregator"],
     marketProbability: number,
     userProbability: number,
     correctionTime: Date,

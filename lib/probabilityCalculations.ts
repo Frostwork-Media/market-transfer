@@ -97,7 +97,7 @@ export const calculateBettingStatisticsFromUserAndMarketData = (userData: Questi
 
 //Todo: read from the database?
 
-const sortData = (data, sortBy, direction) => {
+export const sortData = (data, sortBy, direction) => {
     try {
         return data.sort((a, b) => {
             if (typeof a[sortBy] === 'string')

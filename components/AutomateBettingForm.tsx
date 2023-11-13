@@ -12,7 +12,7 @@ import ApiKeyInput from './ApiKeyInput';
 import { frontendQuestion } from '@/lib/types';
 import { Question } from '@prisma/client';
 import DatePicker from 'react-datepicker';
-import { calculateBettingStatisticsFromUserAndMarketData } from '../lib/probabilityCalculations';
+import { calculateBettingStatisticsFromUserAndMarketData, sortData} from '../lib/probabilityCalculations';
 import 'react-datepicker/dist/react-datepicker.css';
 
 export default function SpreadsheetForm() {
@@ -100,37 +100,14 @@ export default function SpreadsheetForm() {
             }
             processedData.push(calculateBettingStatisticsFromUserAndMarketData(data, market.probability, market.question))
         }
-        return processedData;
+
+        const sortedProcessedData = sortData(processedData, "rOIOverTime", "desc");
+
+        return sortedProcessedData;
     }, [userData, markets]);
 
-    // useEffect(() => {
-    //     console.log("userData useEffect called");
-
-    //     // // if userData is empty, clear localStorage
-
-    //     // if (!userData || userData.length === 0) {
-    //     //     window.localStorage.removeItem('user-data');
-    //     //     window.localStorage.removeItem('processed-data');
-    //     //     setProcessedData([]);
-    //     //     return;
-    //     // }
-
-    //     // // if userData has changed, update localStorage
-
-    //     // const validatedData = validateEntries(userData);
-    //     // const seperatedData = seperateData(validatedData, processedData);
-    //     // console.log("Processing data. Modified data: ", seperatedData.modifiedData, "Unmodified data: ", seperatedData.unmodifiedData);
-    //     // processNewAndUpdatedData(seperatedData.modifiedData, seperatedData.unmodifiedData, setProcessedData);
-
-    //     // also update database 
-
-    //     let databaseQuestions = [];
-    //     for (const data of processedData) {
-    //         databaseQuestions.push(mapToDatabaseQuestion(data));
-    //     }
-    //     sendQuestionsToDatabase(databaseQuestions);
-    // }, [userData]);
-
+    // two more things missing:
+    //  - sending updated data to database
 
     const addToTable = (event) => {
 
