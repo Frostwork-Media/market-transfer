@@ -3,9 +3,7 @@ import {frontendQuestion} from "./types"
 import { Question } from "@prisma/client"
 import { getMarketBySlug, getMarketByUrl, getQuestionsFromDatabase, placeBetBySlug } from '@/lib/api';
 
-export const buyYes = (marketProbability, myProbability ) => {
-    console.log(marketProbability, myProbability);
-    if(typeof marketProbability !== 'number' || typeof myProbability !== 'number')
+export const buyYes = (marketProbability: number, myProbability: number) => {
     return marketProbability <= myProbability;
 }
 
