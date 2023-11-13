@@ -1,4 +1,4 @@
-import { databaseQuestion } from "./types";
+import { Question } from "@prisma/client";
 import { validateEntries } from "./utils";
 
 
@@ -81,23 +81,13 @@ export function getMarketsByGroupID(groupID) {
   return fetch(`https://manifold.markets/api/v0/group/${groupID}`).then(res => res.json());
 }
 
-export async function sendQuestionsToDatabase(questionData: databaseQuestion) {
-  debugger;
+export async function sendQuestionsToDatabase(questionData: Question[]) {
   return fetch('/api/add-to-db',{
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      title: questionData.title,
-      url: questionData.url,
-      marketProbability: questionData.marketProbability,
-      userProbability: questionData.userProbability,
-      marketCorrectionTime: questionData.marketCorrectionTime,
-      rOI: questionData.rOI,
-      aggregator: questionData.aggregator,
-      broadQuestionId: questionData.broadQuestionId,
-    }),
+    body: JSON.stringify(questionData),
   })
     .then((res) => {
       return res.json();

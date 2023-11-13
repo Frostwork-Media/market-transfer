@@ -1,5 +1,6 @@
 import { Question } from "@prisma/client"
 
+// TODO: Use Question as base type? rename to 'QuestionWithMarketData'?
 export interface frontendQuestion {
     title: string,
     url: string,
