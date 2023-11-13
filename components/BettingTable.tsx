@@ -6,8 +6,7 @@ import { floatToPercent, round2SF, round4SF, extractSlugFromURL } from '@/lib/ut
 import LoadingButton from './LoadingButton';
 import DebouncedPercentageInput from './DebouncedPercentageInput';
 import RowDatePicker from './RowDatePicker';
-import {userQuestion} from '../lib/types'
-import { AggregatorEnum } from '@prisma/client';
+import { Question } from '@prisma/client';
 
 export default function BettingTable({tableData, setUserData, apiKey, addBetsDoneData, userData, refreshColumnAfterBet}){
     console.log("Mounting betting table with data", tableData);
@@ -30,11 +29,11 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
     const handleMyPChange = async (slug, value) => {
         // Convert percentage value back to a float between 0 and 1
         const newUserProbability = parseFloat(value) / 100;
-        const newRow:userQuestion = {
+        const newRow: Partial<Question> = {
             slug: slug,
             url: tableData.find(row => row.slug === slug).url || null,
             userProbability: newUserProbability, 
-            correctionTime: tableData.find(row => row.slug === slug).correctionTime,
+            marketCorrectionTime: tableData.find(row => row.slug === slug).correctionTime,
             aggregator: tableData.find(row => row.slug === slug).aggregator, 
         };
             
@@ -83,7 +82,7 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
             <thead className="bg-gray-50">
                 <tr>
                 {headings.map((heading, i) => {
-                    return <th key={i} className="border px-4 py-2 uppercase">{heading}</th>
+                    return <th key={i} className="px-4 py-2 uppercase border">{heading}</th>
                 })}
                 </tr>
             </thead>
@@ -91,17 +90,17 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
 
                 {tableData.map((row) => (
                     <tr key={row.slug}>
-                        <td className="border px-4 py-2 whitespace-normal"><a href={row.url} target="_blank" rel="noopener noreferrer">{row.title}</a></td>
-                        <td className="border px-4 py-2">{row.aggregator}</td>
-                        <td className="border px-4 py-2">{floatToPercent(row.marketProbability)}</td>
-                        <td className="border w-32 px-4 py-2">
+                        <td className="px-4 py-2 whitespace-normal border"><a href={row.url} target="_blank" rel="noopener noreferrer">{row.title}</a></td>
+                        <td className="px-4 py-2 border">{row.aggregator}</td>
+                        <td className="px-4 py-2 border">{floatToPercent(row.marketProbability)}</td>
+                        <td className="w-32 px-4 py-2 border">
                             <DebouncedPercentageInput
                                 slug={row.slug}
                                 initialValue={row.userProbability * 100}
                                 onDebouncedChange={handleMyPChange}
                             />
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="px-4 py-2 border">
                             <RowDatePicker
                                 id={"market-correction-time"+row.slug}
                                 name="correctionTime"
@@ -112,16 +111,16 @@ export default function BettingTable({tableData, setUserData, apiKey, addBetsDon
                                 className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             />
                         </td>
-                        <td className="border px-4 py-2">{row.buy}</td>
-                        {/*<td className="border px-4 py-2">{floatToPercent(row.marketWinChance)}</td>
-                        <td className="border px-4 py-2">{floatToPercent(row.myWinChance)}</td>*/}
-                        <td className="border px-4 py-2">{round2SF(row.marketReturn)}</td>
-                        <td className="border px-4 py-2">{round2SF(row.kellyPerc)}</td>
-                        {/*<td className="border px-4 py-2">{round2SF(row.betEVreturn)}</td>*/}
-                        <td className="border px-4 py-2">{round2SF(row.rOI)}</td>
-                        <td className="border px-4 py-2">{round4SF(row.rOIOverTime)}</td>
+                        <td className="px-4 py-2 border">{row.buy}</td>
+                        {/*<td className="px-4 py-2 border">{floatToPercent(row.marketWinChance)}</td>
+                        <td className="px-4 py-2 border">{floatToPercent(row.myWinChance)}</td>*/}
+                        <td className="px-4 py-2 border">{round2SF(row.marketReturn)}</td>
+                        <td className="px-4 py-2 border">{round2SF(row.kellyPerc)}</td>
+                        {/*<td className="px-4 py-2 border">{round2SF(row.betEVreturn)}</td>*/}
+                        <td className="px-4 py-2 border">{round2SF(row.rOI)}</td>
+                        <td className="px-4 py-2 border">{round4SF(row.rOIOverTime)}</td>
                         <td><LoadingButton passOnClick={() => handleBet(row.slug, row.buy, 100)} buttonText={"Bet M100"} /></td>
-                        <td className="border px-4 py-2"><button onClick={() => handleDeleteRow(row.slug)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete</button></td>
+                        <td className="px-4 py-2 border"><button onClick={() => handleDeleteRow(row.slug)} className="px-4 py-2 font-bold text-white bg-red-500 rounded hover:bg-red-700">Delete</button></td>
                     </tr>
                 ))}
             </tbody>

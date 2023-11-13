@@ -1,11 +1,3 @@
-export interface userQuestion {
-    slug: string,
-    url: string | null, 
-    userProbability: number,
-    correctionTime: Date,
-    aggregator: "MANIFOLD" | "AIRTABLE" | "METACULUS" | "PERSONAL" | "STOCK",
-}
-
 export interface frontendQuestion {
     title: string,
     url: string,

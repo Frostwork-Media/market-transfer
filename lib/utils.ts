@@ -1,5 +1,5 @@
 import { getMarketBySlug } from "./api";
-import { userQuestion } from "./types";
+import { Question } from "@prisma/client"
 
 export function objectToParams(obj) {
   const urlParams = new URLSearchParams();
@@ -35,7 +35,7 @@ function isValidDate(date: any): boolean {
   return !isNaN((new Date(date)).getTime());
 }
 
-export function validateEntries(entries: userQuestion[]) {
+export function validateEntries(entries: Question[]) {
   if(!entries) return [];
   let validdatedData = entries.map(entry => {
     // Default values
@@ -53,31 +53,30 @@ export function validateEntries(entries: userQuestion[]) {
 
     // If 'url' is not present and 'slug' is present, construct the URL from the slug
     if (!entry.url && entry.slug) {
-      const market = getMarketBySlug(entry.slug);
-      console.log(market);
-      defaultURL = market.url;;
+      // TODO: dynamic based on market type
+      defaultURL = `https://manifold.markets/api/v0/slug/${entry.slug}`;
     }
 
-    let correctionTime;
+    let marketCorrectionTime;
 
-    if (entry.correctionTime) {
-      if (isValidDate(entry.correctionTime)) {
-        console.log(`${entry.correctionTime} is a valid date.`);
-        correctionTime = entry.correctionTime;
+    if (entry.marketCorrectionTime) {
+      if (isValidDate(entry.marketCorrectionTime)) {
+        console.log(`${entry.marketCorrectionTime} is a valid date.`);
+        marketCorrectionTime = entry.marketCorrectionTime;
       } else {
-        console.log(`${entry.correctionTime} is not a valid date.`);
-        correctionTime = defaultCorrectionTime;
+        console.log(`${entry.marketCorrectionTime} is not a valid date.`);
+        marketCorrectionTime = defaultCorrectionTime;
       }
     } else {
-      console.log("No correctionTime provided in the entry object.");
-      correctionTime = defaultCorrectionTime;
+      console.log("No marketCorrectionTime provided in the entry object.");
+      marketCorrectionTime = defaultCorrectionTime;
     }
 
     return {
       slug: entry.slug || defaultSlug,
       url: entry.url || defaultURL,
       userProbability: entry.userProbability || defaultUserProbability,
-      correctionTime: correctionTime,
+      marketCorrectionTime: marketCorrectionTime,
       aggregator: entry.aggregator || defaultAggregator
     };
   });
@@ -90,7 +89,7 @@ export function mapToDatabaseQuestion (question) {
     slug: question.slug,
     url: question.url,
     userProbability: question.userProbability,
-    correctionTime: question.correctionTime,
+    marketCorrectionTime: question.marketCorrectionTime,
     broadQuestionId: question.broadQuestionId,
     aggregator: question.aggregator
   }

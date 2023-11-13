@@ -82,6 +82,7 @@ export function getMarketsByGroupID(groupID) {
 }
 
 export async function sendQuestionsToDatabase(questionData: databaseQuestion) {
+  debugger;
   return fetch('/api/add-to-db',{
     method: 'POST',
     headers: {

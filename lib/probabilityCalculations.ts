@@ -1,6 +1,7 @@
 import { promises } from "dns";
-import {frontendQuestion, userQuestion} from "./types"
-import { addQuestionToDatabase, getMarketBySlug, getMarketByUrl, getQuestionsFromDatabase, placeBetBySlug } from '@/lib/api';
+import {frontendQuestion} from "./types"
+import { Question } from "@prisma/client"
+import { getMarketBySlug, getMarketByUrl, getQuestionsFromDatabase, placeBetBySlug } from '@/lib/api';
 
 export const buyYes = (marketProbability, myProbability ) => {
     console.log(marketProbability, myProbability);
@@ -50,14 +51,11 @@ export const calcBetROIOverTime = (betROI, currentTime, marketCorrectionTime) =>
     return (1+betROI)**(1/timeDifferenceInDays)-1;
 }
 
-const processData = async (userData: userQuestion) => {
-    // Fix this
+export const calculateBettingStatisticsFromUserAndMarketData = (userData: Question, marketProbability: number, marketTitle: string) => {
     const currentTime = new Date;
-    const response = await getMarketBySlug(userData.slug);
-    const marketProbability = parseFloat(response.probability);
-    const correctionTime = new Date(userData.correctionTime) || new Date;
-    const thingToBuy = buyYes(response.probability, userData.userProbability);
-    const marketWinChance = calcMarketWinChance(response.probability, thingToBuy);
+    const correctionTime = new Date(userData.marketCorrectionTime) || new Date;
+    const thingToBuy = buyYes(marketProbability, userData.userProbability);
+    const marketWinChance = calcMarketWinChance(marketProbability, thingToBuy);
     const myWinChance = calcMyWinChance(userData.userProbability, thingToBuy);
     const marketReturn = calcMarketReturn(marketWinChance);
     const kellyBetProportion = calcKellyBetProportion(marketReturn, myWinChance);
@@ -66,7 +64,7 @@ const processData = async (userData: userQuestion) => {
     const betROIOverTime = calcBetROIOverTime(betROI, currentTime, correctionTime);
     
     const output:frontendQuestion = {
-        title: response.question,
+        title: marketTitle,
         slug: userData.slug,
         url: userData.url,
         aggregator: userData.aggregator,
@@ -196,22 +194,22 @@ export const seperateData = (userData, processedData) => {
 //     setTableData(refreshedData);
 // }
 
-export const processNewAndUpdatedData = async (modifiedData, unmodifiedData, setProcessedData) => {
-    const newProcessedData = await Promise.all(modifiedData?.map((row) => processData(row)));
+// export const processNewAndUpdatedData = async (modifiedData, unmodifiedData, setProcessedData) => {
+//     const newProcessedData = await Promise.all(modifiedData?.map((row) => processData(row)));
 
-    const finalData = [...unmodifiedData, ...newProcessedData]
+//     const finalData = [...unmodifiedData, ...newProcessedData]
 
-    const sortedData = sortData(finalData, "rOIOverTime", "desc");
+//     const sortedData = sortData(finalData, "rOIOverTime", "desc");
 
-    setProcessedData(sortedData);
+//     setProcessedData(sortedData);
 
-    try {
-        window?.localStorage.setItem('processed-data', JSON.stringify(finalData));
-        const saveUserData:userQuestion[] = finalData.map((row) => ({ slug: row.slug, url: null, userProbability: row.userProbability, marketCorrectionTime: row.marketCorrectionTime || new Date,}));
-        console.log(saveUserData);
-        window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
-    } catch (error) {
-        console.log(error)
-        alert('Error processing data. Please ensure it is in the correct format.');
-    }
-}
+//     try {
+//         window?.localStorage.setItem('processed-data', JSON.stringify(finalData));
+//         const saveUserData:userQuestion[] = finalData.map((row) => ({ slug: row.slug, url: null, userProbability: row.userProbability, marketCorrectionTime: row.marketCorrectionTime || new Date,}));
+//         console.log(saveUserData);
+//         window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
+//     } catch (error) {
+//         console.log(error)
+//         alert('Error processing data. Please ensure it is in the correct format.');
+//     }
+// }

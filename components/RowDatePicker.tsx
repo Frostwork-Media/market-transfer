@@ -1,16 +1,22 @@
 import DatePicker from 'react-datepicker';
-import { format } from 'date-fns';
-import { userQuestion } from '@/lib/types';
+import { Question } from '@prisma/client';
 
 export default function Component({id, name, selected, className, setUserData, slug, tableData}) {
     
     const handleCorrectionTimeChange = (slug, time) => {
         console.log("Updating correction time for ", slug, " to ", time);
-        const newRow:userQuestion = {
+
+        const oldRow = tableData.find(row => row.slug === slug);
+        if (!oldRow) {
+            throw new Error(`row not found for slug ${slug}`);
+        }
+
+        const newRow: Question = {
+            ...oldRow,
             slug: slug,
             url: tableData.find(row => row.slug === slug).url || null,
             userProbability: tableData.find(row => row.slug === slug).userProbability,
-            correctionTime: time,
+            marketCorrectionTime: time,
             aggregator: tableData.find(row => row.slug === slug).aggregator,
         };
         const updatedUserData = tableData.map((row) => {
