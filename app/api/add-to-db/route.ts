@@ -1,8 +1,9 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { UserQuestionDatum } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
-  const questionsData = await req.json();
+  const questionsData = (await req.json()) as UserQuestionDatum[];
 
   // Ensure the body contains an array of questions
   if (!Array.isArray(questionsData)) {
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
       prisma.question.createMany({
         data: questionsData.map((question) => ({
           slug: question.slug,
-          url: question.url,
+          url: question.url ?? "",
           userProbability: question.userProbability,
           marketCorrectionTime: question.marketCorrectionTime,
           aggregator: question.aggregator,
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
       message: "Questions replaced successfully.",
     });
   } catch (error) {
+    console.log("Replacing questions in the database...")
+    console.log(questionsData)
     console.error("Error replacing questions in the database:", error);
     throw error;
   }

@@ -1,18 +1,15 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
-import { getMarketBySlug, placeBetBySlug } from "@/lib/api";
-import {
-  floatToPercent,
-  round2SF,
-  round4SF,
-  extractSlugFromURL,
-} from "@/lib/utils";
+import React from "react";
+import { placeBetBySlug } from "@/lib/api";
+import { floatToPercent, round2SF, round4SF } from "@/lib/utils";
 import LoadingButton from "./LoadingButton";
 import DebouncedPercentageInput from "./DebouncedPercentageInput";
 import RowDatePicker from "./RowDatePicker";
-import { Question } from "@prisma/client";
-import { frontendQuestion } from "@/lib/types";
+import { Question_aggregator } from "@prisma/client";
+import {
+  frontendQuestion,
+  frontendQuestionToUserQuestionDatum,
+  UserQuestionDatum,
+} from "@/lib/types";
 
 export default function BettingTable({
   tableData,
@@ -21,13 +18,15 @@ export default function BettingTable({
   addBetsDoneData,
   userData,
   refreshColumnAfterBet,
+  isLoading,
 }: {
   tableData: frontendQuestion[];
-  setUserData: any;
+  setUserData: (userData: UserQuestionDatum[]) => Promise<void>;
   apiKey: any;
   addBetsDoneData: any;
   userData: any;
   refreshColumnAfterBet: any;
+  isLoading: boolean;
 }) {
   console.log("Mounting betting table with data", tableData);
 
@@ -49,13 +48,14 @@ export default function BettingTable({
   const handleMyPChange = async (slug, value) => {
     // Convert percentage value back to a float between 0 and 1
     const newUserProbability = parseFloat(value) / 100;
-    const newRow: Partial<Question> = {
+    const newRow: UserQuestionDatum = {
       slug: slug,
       url: tableData.find((row) => row.slug === slug).url || null,
       userProbability: newUserProbability,
       marketCorrectionTime: tableData.find((row) => row.slug === slug)
         .correctionTime,
       aggregator: tableData.find((row) => row.slug === slug).aggregator,
+      broadQuestionId: null,
     };
 
     // Update the user data
@@ -63,9 +63,23 @@ export default function BettingTable({
       if (row.slug === slug) {
         return newRow;
       }
-      return row;
+
+      return frontendQuestionToUserQuestionDatum(row);
     });
     setUserData(updatedUserData);
+  };
+
+  const handleDateChange = async (slug, newDate) => {
+    const updatedUserData = tableData.map((row) => {
+      if (row.slug === slug) {
+        return {
+          ...row,
+          correctionTime: newDate,
+        };
+      }
+      return row;
+    });
+    setUserData(updatedUserData.map(frontendQuestionToUserQuestionDatum));
   };
 
   const handleDeleteRow = (slug) => {
@@ -73,15 +87,7 @@ export default function BettingTable({
     const index = updatedData.findIndex((row) => row.slug === slug);
     updatedData.splice(index, 1);
 
-    // Transform the data
-    const transformedData = updatedData.map((item) => {
-      return {
-        slug: item.slug,
-        userProbability: item.userProbability,
-      };
-    });
-    console.log("Data after delete: ", transformedData);
-    setUserData(transformedData);
+    setUserData(updatedData.map(frontendQuestionToUserQuestionDatum));
   };
 
   const handleBet = async (slug, outcomeToBuy, amountToPay) => {
@@ -116,34 +122,44 @@ export default function BettingTable({
             })}
           </tr>
         </thead>
+
         <tbody className="bg-white divide-y divide-gray-200">
           {tableData.map((row) => (
             <tr key={row.slug}>
               <td className="px-4 py-2 whitespace-normal border">
-                <a href={row.url} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={row.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-700"
+                >
                   {row.title}
                 </a>
               </td>
               <td className="px-4 py-2 border">{row.aggregator}</td>
               <td className="px-4 py-2 border">
-                {floatToPercent(row.marketProbability)}
+                {row.aggregator === Question_aggregator.MANIFOLD ? (
+                  floatToPercent(row.marketProbabilities.buyYes)
+                ) : (
+                  <>
+                    {floatToPercent(row.marketProbabilities.buyYes)} /{" "}
+                    {floatToPercent(1 - row.marketProbabilities.buyNo)}
+                  </>
+                )}
               </td>
               <td className="w-32 px-4 py-2 border">
                 <DebouncedPercentageInput
                   slug={row.slug}
-                  initialValue={row.userProbability * 100}
+                  initialValue={Number((row.userProbability * 100).toFixed(2))}
                   onDebouncedChange={handleMyPChange}
                 />
               </td>
               <td className="px-4 py-2 border">
                 <RowDatePicker
-                  id={"market-correction-time" + row.slug}
                   name="correctionTime"
                   selected={row.correctionTime}
-                  slug={row.slug}
-                  setUserData={setUserData}
-                  tableData={tableData}
                   className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  onChange={(newDate) => handleDateChange(row.slug, newDate)}
                 />
               </td>
               <td className="px-4 py-2 border">{row.buy}</td>
@@ -170,6 +186,14 @@ export default function BettingTable({
               </td>
             </tr>
           ))}
+
+          {isLoading && (
+            <tr>
+              <td className="p-4" colSpan={headings.length}>
+                Loading...
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

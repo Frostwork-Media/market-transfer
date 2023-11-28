@@ -1,45 +1,30 @@
-import DatePicker from 'react-datepicker';
-import { Question } from '@prisma/client';
+import DatePicker from "react-datepicker";
+import { Question } from "@prisma/client";
+import { useCallback } from "react";
 
-export default function Component({id, name, selected, className, setUserData, slug, tableData}) {
-    
-    const handleCorrectionTimeChange = (slug, time) => {
-        console.log("Updating correction time for ", slug, " to ", time);
+export default function RowDatePicker({
+  name,
+  selected,
+  className,
+  onChange,
+}: {
+  name: string,
+  selected: string | Date,
+  className: string,
+  onChange: (newDate: Date) => void,
+}) {
+  const handleChange = useCallback((time) => {
+    console.log("Date changed: ", time);
+    onChange(time);
+  }, []);
 
-        const oldRow = tableData.find(row => row.slug === slug);
-        if (!oldRow) {
-            throw new Error(`row not found for slug ${slug}`);
-        }
-
-        const newRow: Question = {
-            ...oldRow,
-            slug: slug,
-            url: tableData.find(row => row.slug === slug).url || null,
-            userProbability: tableData.find(row => row.slug === slug).userProbability,
-            marketCorrectionTime: time,
-            aggregator: tableData.find(row => row.slug === slug).aggregator,
-        };
-        const updatedUserData = tableData.map((row) => {
-            if (row.slug === slug) {
-                return newRow;
-            }
-            return row;
-        });
-        setUserData(updatedUserData);
-    }
-
-    const handleChange = (time) => {
-        console.log("Date changed: ", time);
-        handleCorrectionTimeChange(slug, time);
-    }
-
-    return (
-        <DatePicker
-        name={name}
-        selected={selected}
-        onChange={handleChange}
-        className={className}
-        dateFormat="yyyy/MM/dd"
+  return (
+    <DatePicker
+      name={name}
+      selected={selected}
+      onChange={handleChange}
+      className={className}
+      dateFormat="yyyy/MM/dd"
     />
-    )
+  );
 }

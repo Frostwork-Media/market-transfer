@@ -1,18 +1,62 @@
-import { Question } from "@prisma/client";
+import { Question, Question_aggregator } from "@prisma/client";
 import { validateEntries } from "./utils";
+import { UserQuestionDatum } from "./types";
 
+export type Market = {
+  aggregator: Question_aggregator;
+  externalId: string;
+  slugOrId: string;
+  title: string;
+  url: string;
+  buyYes: number;
+  buyNo: number;
+}
 
-export function getMarketBySlug(slug) {
-  return fetch(`https://manifold.markets/api/v0/slug/${slug}`).then(res => res.json());
+export async function getManifoldMarketBySlug(userSlug: string): Promise<Market> {
+  const manifoldData = await (await fetch(`https://manifold.markets/api/v0/slug/${userSlug}`)).json()
+  const { id, slug, question, url, probability } = manifoldData;
+  return {
+    aggregator: Question_aggregator.MANIFOLD,
+    externalId: id,
+    slugOrId: slug,
+    title: question,
+    url,
+    buyYes: probability,
+    buyNo: 1 - probability,
+  };
+}
+
+export async function getInsightMarketByMarketId(marketId): Promise<Market> {
+  const chartData = await fetch(`/api/insight-markets`, {
+    method: 'POST',
+    body: JSON.stringify({ marketId }),
+  })
+  if (!chartData.ok) {
+    throw new Error(`Error fetching chart data: ${chartData.status} ${chartData.statusText}`);
+  }
+
+  const { title, buyYes, buyNo } = await chartData.json();
+  
+  // get the order book for this (market,choice,NO) triple
+  
+  return {
+    aggregator: Question_aggregator.INSIGHT,
+    externalId: marketId,
+    slugOrId: marketId,
+    title,
+    url: `https://insightprediction.com/m/${marketId}`,
+    buyYes,
+    buyNo,
+  };
 }
 
 export function getMarketByUrl(url) {
   console.log(`Fetching market with url ${url}`);
-  return getMarketBySlug(url.split('/').pop());
+  return getManifoldMarketBySlug(url.split('/').pop());
 }
 
 export function getIDBySlug(slug) {
-  return getMarketBySlug(slug).then(market => market.id);
+  return getManifoldMarketBySlug(slug).then(market => market.externalId);
 }
 
 export function placeBet(apiKey, marketID, betAmount, outcomeToBuy) {
@@ -81,7 +125,7 @@ export function getMarketsByGroupID(groupID) {
   return fetch(`https://manifold.markets/api/v0/group/${groupID}`).then(res => res.json());
 }
 
-export async function sendQuestionsToDatabase(questionData: Question[]) {
+export async function sendQuestionsToDatabase(questionData: UserQuestionDatum[]) {
   return fetch('/api/add-to-db',{
     method: 'POST',
     headers: {

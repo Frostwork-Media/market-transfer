@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getMarketBySlug, placeBetBySlug, getGroupIDbySlug, getMarketsByGroupID } from '@/lib/api';
+import { placeBetBySlug, getGroupIDbySlug, getMarketsByGroupID } from '@/lib/api';
 //import calc from '@/lib/probabilityCalculations';
 //import { floatToPercent, round2SF} from '@/lib/utils';
 
@@ -32,7 +32,7 @@ export default function Component() {
     return (
         <div className="w-full">
             <button
-                className="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded"
+                className="px-4 py-2 font-bold bg-blue-500 rounded hover:bg-blue-700"
                 onClick={handleClick}
             >
                 Generate list

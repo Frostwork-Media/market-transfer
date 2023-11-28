@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { getMarketBySlug } from '../lib/api';
+import { getManifoldMarketBySlug } from '../lib/api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { objectToParams } from '../lib/utils'
@@ -51,7 +51,7 @@ export default function Component() {
 
         if(!value) return alert('Please enter a slug or url')
         //get data from search
-        const data = await getMarketBySlug(value);
+        const data = await getManifoldMarketBySlug(value);
         const closeTime = new Date(data.closeTime);
         let output = {
             question: data.question,
@@ -69,11 +69,11 @@ export default function Component() {
                             type="text"
                             id="search"
                             placeholder="Enter slug or url"
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="block w-full py-2 pl-10 pr-3 leading-5 bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             value={slug}
                             onChange={handleInputChange}
                         />
-                        <button onClick={handleSubmit} className="ml-2 p-2 bg-blue-500  rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" >🔍</button>
+                        <button onClick={handleSubmit} className="p-2 ml-2 bg-blue-500 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" >🔍</button>
 
                     </div>
                     <div>
@@ -110,11 +110,11 @@ export default function Component() {
                             ></textarea>
                         </div>
                         <div className="my-4">
-                            <button onClick={handleCopyToClipboard} className="bg-blue-500 hover:bg-blue-700  font-bold py-2 px-4 rounded mt-4">
+                            <button onClick={handleCopyToClipboard} className="px-4 py-2 mt-4 font-bold bg-blue-500 rounded hover:bg-blue-700">
                                 Copy to Clipboard
                             </button>
                             <button
-                                className="bg-blue-500 hover:bg-blue-700  font-bold py-2 px-4 rounded mt-4"
+                                className="px-4 py-2 mt-4 font-bold bg-blue-500 rounded hover:bg-blue-700"
                                 onClick={() => {
                                     const manifoldParams = objectToParams({
                                         q: questionTitle,

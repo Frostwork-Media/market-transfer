@@ -3,18 +3,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getQuestionsFromDatabase,
-  getMarketBySlug,
+  getManifoldMarketBySlug,
   sendQuestionsToDatabase,
+  getInsightMarketByMarketId,
+  Market,
 } from "@/lib/api";
-import { extractSlugFromURL } from "@/lib/utils";
+import { extractMarketIdFromInsightURL, extractSlugFromURL } from "@/lib/utils";
 import LoadingButton from "./LoadingButton";
 import SearchManifold from "./SearchManifold";
 import BettingTable from "./BettingTable";
 import BetsDoneTextArea from "./BetsDoneTextArea";
 import Link from "next/link";
 import ApiKeyInput from "./ApiKeyInput";
-import { frontendQuestion } from "@/lib/types";
-import { Question } from "@prisma/client";
+import { UserQuestionDatum, frontendQuestion } from "@/lib/types";
+import { Question_aggregator } from "@prisma/client";
 import DatePicker from "react-datepicker";
 import {
   calculateBettingStatisticsFromUserAndMarketData,
@@ -22,14 +24,16 @@ import {
 } from "../lib/probabilityCalculations";
 import "react-datepicker/dist/react-datepicker.css";
 
-export default function SpreadsheetForm() {
+export default function AutomateBettingForm() {
   const [apiKey, setApiKey] = useState("");
   const [betsDoneData, setBetsDoneData] = useState([]);
-  const [marketSlug, setMarketSlug] = useState("");
+  const [aggregator, setAggregator] = useState<Question_aggregator>("MANIFOLD");
+  const [marketURL, setMarketURL] = useState("");
   const [prob, setMarketProb] = useState(50);
-  const [userData, setUserData] = useState<Question[]>([]);
+  const [userData, setUserData] = useState<UserQuestionDatum[]>([]);
   const [activeTab, setActiveTab] = useState("manifold");
   const [correctionTime, setCorrectionTime] = useState(new Date());
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCorrectionTimeChange = (date) => {
     setCorrectionTime(date);
@@ -47,7 +51,7 @@ export default function SpreadsheetForm() {
   };
 
   const handleSearchSelect = async (market) => {
-    setMarketSlug(extractSlugFromURL(market.url));
+    setMarketURL(market.url);
     setMarketProb(market.probability * 100);
   };
 
@@ -69,46 +73,76 @@ export default function SpreadsheetForm() {
     }
   }, []);
 
-  // For every slug in userData, get each market. `markets` is then a map from
-  // slug to market.
+  // For every slug / market ID in userData, get each market. `markets` is then a map from
+  // `aggregator-slug/id` to market.
 
-  const slugs = useMemo(() => userData.map((m) => m.slug), [userData]);
+  const slugsByAggregator = useMemo<Record<Question_aggregator, string[]>>(
+    () =>
+      userData.reduce((arr, m) => {
+        if (arr[m.aggregator]) {
+          arr[m.aggregator].push(m.slug);
+        } else {
+          arr[m.aggregator] = [m.slug];
+        }
+        return arr;
+      }, {} as Record<Question_aggregator, string[]>),
+    [userData]
+  );
 
-  const [markets, setMarkets] = useState<
-    Record<string, { probability: number; question: string }>
-  >({});
+  const [markets, setMarkets] = useState<Record<string, Market>>({});
 
   useEffect(() => {
-    if (!slugs || slugs.length === 0) {
+    if (Object.keys(slugsByAggregator).length === 0) {
       return;
     }
 
-    (async () => {
-      const slugToMarketMap = {};
+    setIsLoading(true);
 
-      for (const slug of slugs) {
-        const market = await getMarketBySlug(slug);
-        slugToMarketMap[slug] = market;
+    (async () => {
+      const AGGREGATOR_LOAD_ORDER: any[] = [Question_aggregator.MANIFOLD, Question_aggregator.INSIGHT];
+      const sortedAggregatorKeys = Object.keys(slugsByAggregator).sort(
+        (a, b) => AGGREGATOR_LOAD_ORDER.indexOf(a as Question_aggregator) - AGGREGATOR_LOAD_ORDER.indexOf(b as Question_aggregator)
+      );
+
+      for (const aggregator of sortedAggregatorKeys) {
+        const slugs = slugsByAggregator[aggregator as Question_aggregator];
+        for (const slug of slugs) {
+          if (aggregator === Question_aggregator.MANIFOLD) {
+            const market = await getManifoldMarketBySlug(slug);
+            setMarkets((markets) => ({
+              ...markets,
+              [`${aggregator}-${slug}`]: market,
+            }));
+          } else if (aggregator === Question_aggregator.INSIGHT) {
+            const market = await getInsightMarketByMarketId(slug);
+            setMarkets((markets) => ({
+              ...markets,
+              [`${aggregator}-${slug}`]: market,
+            }));
+          } else {
+            throw new Error("Unknown aggregator");
+          }
+        }
       }
 
-      setMarkets(slugToMarketMap);
+      setIsLoading(false);
     })();
-  }, [slugs]);
+  }, [slugsByAggregator]);
 
   // Now we have the user data and the market data, we can calculate the processed data.
 
   const processedData = useMemo<frontendQuestion[]>(() => {
     let processedData = [];
     for (const data of userData) {
-      const market = markets[data.slug];
+      const market = markets[`${data.aggregator}-${data.slug}`];
       if (!market) {
         continue;
       }
       processedData.push(
         calculateBettingStatisticsFromUserAndMarketData(
           data,
-          market.probability,
-          market.question
+          { buyYes: market.buyYes, buyNo: market.buyNo },
+          market.title
         )
       );
     }
@@ -121,31 +155,46 @@ export default function SpreadsheetForm() {
   // two more things missing:
   //  - sending updated data to database
 
-  const setUserDataAndPersist = useCallback(async (newUserData: Question[]) => {
-    setUserData(newUserData);
-    await sendQuestionsToDatabase(newUserData);
-  }, []);
+  const setUserDataAndPersist = useCallback(
+    async (newQuestions: UserQuestionDatum[]) => {
+      setUserData(newQuestions);
+      await sendQuestionsToDatabase(newQuestions);
+    },
+    []
+  );
 
   const addToTable = (event) => {
-    if (!processedData.map((m) => m.slug).includes(marketSlug)) {
-      const updatedUserData: Partial<Question>[] = [
+    let marketSlugOrId: string;
+    if (aggregator === Question_aggregator.MANIFOLD) {
+      marketSlugOrId = extractSlugFromURL(marketURL);
+    } else if (aggregator === Question_aggregator.INSIGHT) {
+      marketSlugOrId = extractMarketIdFromInsightURL(marketURL);
+    } else {
+      marketSlugOrId = marketURL;
+    }
+    if (!processedData.map((m) => m.slug).includes(marketSlugOrId)) {
+      const updatedUserData: UserQuestionDatum[] = [
         {
-          slug: marketSlug,
-          url: null,
+          slug: marketSlugOrId,
+          url: marketURL,
           userProbability: +prob / 100,
           marketCorrectionTime: correctionTime,
-          aggregator: "MANIFOLD",
+          aggregator: aggregator,
+          broadQuestionId: null,
         },
         ...userData,
       ];
 
-      // TODO: add new row to database
-      //setUserData(updatedUserData);
+      setUserDataAndPersist(updatedUserData);
     }
   };
 
-  const handleSlugInput = (event) => {
-    setMarketSlug(event.target.value);
+  const handleAggregatorChange = (event) => {
+    setAggregator(event.target.value);
+  };
+
+  const handleURLInput = (event) => {
+    setMarketURL(event.target.value);
   };
 
   const handleProbInput = (event) => {
@@ -162,7 +211,9 @@ export default function SpreadsheetForm() {
 
   const refreshColumnAfterBet = async (slug) => {
     console.log("Refreshing column after bet", slug);
-    const updatedUserData: Question[] = userData.filter((m) => m.url !== slug);
+    const updatedUserData: UserQuestionDatum[] = userData.filter(
+      (m) => m.url !== slug
+    );
     setUserData(updatedUserData);
   };
 
@@ -182,12 +233,34 @@ export default function SpreadsheetForm() {
                   }`}
                 >
                   {" "}
-                  Manifold
+                  Manifold Bets
+                </button>
+                <button
+                  onClick={() => setActiveTab("add-market")}
+                  className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm ${
+                    activeTab === "add-market"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {" "}
+                  Add Market
                 </button>
               </nav>
             </div>
+            {activeTab === "manifold" && (
+              <div className="p-4">
+                <label
+                  htmlFor="api-key"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Bets done:
+                </label>
 
-            {activeTab === "advanced" && (
+                <BetsDoneTextArea betsDoneData={betsDoneData} />
+              </div>
+            )}
+            {activeTab === "add-market" && (
               <div className="p-4">
                 <label
                   htmlFor="market-search"
@@ -202,19 +275,40 @@ export default function SpreadsheetForm() {
                 />
 
                 <label
-                  htmlFor="market_slug"
+                  htmlFor="aggregator"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Slug:
+                  Aggregator:
+                </label>
+
+                <select
+                  id="aggregator"
+                  name="aggregator"
+                  className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={aggregator}
+                  onChange={handleAggregatorChange}
+                >
+                  <option value="MANIFOLD">MANIFOLD</option>
+                  <option value="INSIGHT">INSIGHT</option>
+                </select>
+
+                {/* market selection dropdown */}
+
+                <label
+                  htmlFor="market_URL"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Market URL:
                 </label>
 
                 <input
-                  id="market_slug"
-                  name="market_slug"
+                  id="market_URL"
+                  name="market_URL"
                   className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  value={marketSlug}
-                  onChange={handleSlugInput}
+                  value={marketURL}
+                  onChange={handleURLInput}
                 />
+
                 <label
                   htmlFor="market_prob"
                   className="block text-sm font-medium text-gray-700"
@@ -260,15 +354,6 @@ export default function SpreadsheetForm() {
             buttonText={"Refresh table"}
           />
 
-          <label
-            htmlFor="api-key"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Bets done:
-          </label>
-
-          <BetsDoneTextArea betsDoneData={betsDoneData} />
-
           <div className="flex flex-wrap gap-2 m-2 mt-8">
             <Link
               href="https://github.com/Nathan-Tom/market-transfer"
@@ -295,6 +380,7 @@ export default function SpreadsheetForm() {
           apiKey={apiKey}
           addBetsDoneData={addBetsDoneData}
           refreshColumnAfterBet={refreshColumnAfterBet}
+          isLoading={isLoading}
         />
       </div>
     </div>

@@ -1,4 +1,3 @@
-import { getMarketBySlug } from "./api";
 import { Question } from "@prisma/client"
 
 export function objectToParams(obj) {
@@ -29,6 +28,17 @@ export function extractSlugFromURL(url) {
   console.log(url);
   const parts = url.split("/");
   return parts[parts.length - 1];
+}
+
+export function extractMarketIdFromInsightURL(url) {
+  const regex = /insightprediction\.com\/m\/(\d+)/;
+  const match = url.match(regex);
+
+  if (match) {
+    return match[1];
+  } else {
+    throw new Error("Invalid insight URL");
+  }
 }
 
 function isValidDate(date: any): boolean {
