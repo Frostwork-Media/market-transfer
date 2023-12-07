@@ -156,9 +156,6 @@ export default function SpreadsheetForm() {
         <div className="w-full">
             <div className="my-4 flex justify-center">
                 <div className="my-4 w-1/2">
-                    <FileHandler dataToSave={userData} loadDataEndpoint={setUserData} />
-
-                    <label htmlFor="market-search" className="block text-sm font-medium text-gray-700">Search markets to autofill:</label>
                     <div className="w-full">
                         <div className="border-b border-gray-200">
                             <nav className="-mb-px flex" aria-label="Tabs">
