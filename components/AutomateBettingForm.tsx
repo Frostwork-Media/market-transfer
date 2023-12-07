@@ -30,11 +30,12 @@ export default function SpreadsheetForm() {
         setCorrectionTime(date);
     };
 
-    const addBetsDoneData = async (slug, outcomeToBuy, amountToPay) => {
+    const addBetsDoneData = async (slug, outcomeToBuy, amountToPay, isSimulated: boolean = false) => {
         const nextRow = {
-            slug: slug,
-            outcomeToBuy: outcomeToBuy,
-            amountToPay: amountToPay,
+            slug,
+            outcomeToBuy,
+            amountToPay,
+            isSimulated,
         }
         console.log("Adding row to bets done data", nextRow);
         setBetsDoneData(prevBetsDoneData => [...prevBetsDoneData, nextRow]);
@@ -45,6 +46,11 @@ export default function SpreadsheetForm() {
         console.log("Autobetting", amount);
         for (let i = 0; i < amount; i = i + 100) {
             console.log("Bet at", i);
+
+            if (!apiKey) {
+                addBetsDoneData(processedData[0].slug, processedData[0].buy, 100, true);
+                continue;
+            }
 
             await placeBetBySlug(apiKey, processedData[0].slug, 100, processedData[0].buy)
                 .then(async () => {
@@ -58,7 +64,7 @@ export default function SpreadsheetForm() {
                 });
         }
     }
-   
+
     const handleSearchSelect = async (market) => {
         setMarketSlug(extractSlugFromURL(market.url));
         setMarketProb(market.probability*100);
@@ -72,12 +78,12 @@ export default function SpreadsheetForm() {
             return results;
         }
         fetchData().then(data => data ? setUserData(data) : null );
-        const storedApiKey = window.localStorage.getItem('api-key');
+        const storedApiKey = window.localStorage.getItem('manifold');
 
         if (storedApiKey) {
             setApiKey(storedApiKey);
         }
-    
+
     }, []);
 
     useEffect(() => {
@@ -98,6 +104,15 @@ export default function SpreadsheetForm() {
         }
         sendQuestionsToDatabase(databaseQuestions);
     }, [userData]);
+
+    useEffect(() => {
+        window.localStorage.setItem('manifold', apiKey);
+
+        if (apiKey) {
+            setBetsDoneData(betsDoneData.filter((bet) => !bet.isSimulated));
+        }
+
+    }, [apiKey])
 
     const addToTable = (event) => {
 
@@ -224,16 +239,17 @@ export default function SpreadsheetForm() {
                         )}
                         {activeTab === 'autobet' && (
 
-                            <LoadingButton passOnClick={() => autobet(500)} buttonText={"Autobet 500"} />
+                            <LoadingButton passOnClick={() => autobet(500)} buttonText={"Autobet 500" + (apiKey ? "" : " (simulated)")} />
 
                         )}
                     </div>
 
-                    <ApiKeyInput onChange={handleApiChange} keyName="manifold" />
-                    
+                    <label htmlFor="api-keymanifold" className="block text-sm font-medium text-gray-700">API key (for auto betting, leave empty for simulation mode)</label>
+                    <ApiKeyInput keyName="manifold" onChange={setApiKey} />
+
                     <LoadingButton passOnClick={handleRefreshData} buttonText={"Refresh table"} />
 
-                    <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Bets done:</label>
+                    <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">Bets done{apiKey ? "" : " (simulated, add API key to clear)"}:</label>
 
                     <BetsDoneTextArea betsDoneData={betsDoneData} />
 
