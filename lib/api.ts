@@ -50,6 +50,9 @@ export async function getInsightMarketByMarketId(marketId): Promise<Market> {
   };
 }
 
+export async function getPolymarketMarketByMarketSlug(slug): Promise<Market> {
+  
+
 export function getMarketByUrl(url) {
   console.log(`Fetching market with url ${url}`);
   return getManifoldMarketBySlug(url.split('/').pop());

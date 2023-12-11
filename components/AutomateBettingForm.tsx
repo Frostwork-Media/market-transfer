@@ -6,6 +6,7 @@ import {
   getManifoldMarketBySlug,
   sendQuestionsToDatabase,
   getInsightMarketByMarketId,
+  getPolymarketMarketByMarketSlug,
   Market,
 } from "@/lib/api";
 import { extractMarketIdFromInsightURL, extractSlugFromURL } from "@/lib/utils";
@@ -119,7 +120,14 @@ export default function AutomateBettingForm() {
               ...markets,
               [`${aggregator}-${slug}`]: market,
             }));
-          } else {
+          } else if (aggregator === Question_aggregator.POLYMARKET) {
+            const market = await getPolymarketMarketByMarketSlug(slug);
+            setMarkets((markets) => ({
+              ...markets,
+              [`${aggregator}-${slug}`]: market,
+            }));
+          } 
+          else {
             throw new Error("Unknown aggregator");
           }
         }
@@ -290,6 +298,7 @@ export default function AutomateBettingForm() {
                 >
                   <option value="MANIFOLD">MANIFOLD</option>
                   <option value="INSIGHT">INSIGHT</option>
+                  <option value="POLYMARKET">POLYMARKET</option>
                 </select>
 
                 {/* market selection dropdown */}
