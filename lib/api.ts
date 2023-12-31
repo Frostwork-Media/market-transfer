@@ -50,8 +50,27 @@ export async function getInsightMarketByMarketId(marketId): Promise<Market> {
   };
 }
 
-export async function getPolymarketMarketByMarketSlug(slug): Promise<Market> {
-  
+export async function getPolymarketMarketByMarketSlug(conditionId: string): Promise<Market> {
+  const marketData = await fetch(`/api/polymarket`, {
+    method: 'POST',
+    body: JSON.stringify({ conditionId }),
+  })
+  if (!marketData.ok) {
+    throw new Error(`Error fetching chart data: ${marketData.status} ${marketData.statusText}`);
+  }
+
+  const { title, slug, buyYes, buyNo } = await marketData.json();
+    
+  return {
+    aggregator: Question_aggregator.POLYMARKET,
+    externalId: conditionId,
+    slugOrId: slug,
+    title,
+    url: `https://polymarket.com/event/${slug}`,
+    buyYes,
+    buyNo,
+  };
+}
 
 export function getMarketByUrl(url) {
   console.log(`Fetching market with url ${url}`);
