@@ -18,6 +18,7 @@ export default function BettingTable({
   addBetsDoneData,
   userData,
   refreshColumnAfterBet,
+  totalDollarWealth,
   isLoading,
 }: {
   tableData: frontendQuestion[];
@@ -26,6 +27,7 @@ export default function BettingTable({
   addBetsDoneData: any;
   userData: any;
   refreshColumnAfterBet: any;
+  totalDollarWealth: number;
   isLoading: boolean;
 }) {
   console.log("Mounting betting table with data", tableData);
@@ -39,6 +41,7 @@ export default function BettingTable({
     "Buy",
     "Return",
     "Kelly %",
+    "Max bet",
     "ROI",
     "ROI per day",
     "", // button
@@ -167,6 +170,7 @@ export default function BettingTable({
                         <td className="px-4 py-2 border">{floatToPercent(row.myWinChance)}</td>*/}
               <td className="px-4 py-2 border">{round2SF(row.marketReturn)}</td>
               <td className="px-4 py-2 border">{round2SF(row.kellyPerc)}</td>
+              <td className="px-4 py-2 border">{round2SF(row.kellyPerc*totalDollarWealth)}</td>
               {/*<td className="px-4 py-2 border">{round2SF(row.betEVreturn)}</td>*/}
               <td className="px-4 py-2 border">{round2SF(row.rOI)}</td>
               <td className="px-4 py-2 border">{round4SF(row.rOIOverTime)}</td>

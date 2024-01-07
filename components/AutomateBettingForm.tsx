@@ -34,6 +34,7 @@ export default function AutomateBettingForm() {
   const [userData, setUserData] = useState<UserQuestionDatum[]>([]);
   const [activeTab, setActiveTab] = useState("manifold");
   const [correctionTime, setCorrectionTime] = useState(new Date());
+  const [totalDollarWealth, setTotalDollarWealth] = useState([])
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCorrectionTimeChange = (date) => {
@@ -217,6 +218,10 @@ export default function AutomateBettingForm() {
     console.log("Refreshing data");
   };
 
+  const handleTotalDollarWealthChange = (event) => {
+    setTotalDollarWealth(event.target.value)
+  }
+
   const refreshColumnAfterBet = async (slug) => {
     console.log("Refreshing column after bet", slug);
     const updatedUserData: UserQuestionDatum[] = userData.filter(
@@ -301,13 +306,11 @@ export default function AutomateBettingForm() {
                   <option value="POLYMARKET">POLYMARKET</option>
                 </select>
 
-                {/* market selection dropdown */}
-
                 <label
                   htmlFor="market_URL"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Market URL:
+                  Market Id/Slug/URL:
                 </label>
 
                 <input
@@ -322,7 +325,7 @@ export default function AutomateBettingForm() {
                   htmlFor="market_prob"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Probability (percentage):
+                  Probability (0-100):
                 </label>
 
                 <input
@@ -363,6 +366,21 @@ export default function AutomateBettingForm() {
             buttonText={"Refresh table"}
           />
 
+          <label
+            htmlFor="market_prob"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Total wealth:
+          </label>
+
+          <input
+            id="dollar-wealth"
+            name="dollar-wealth"
+            className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            value={totalDollarWealth}
+            onChange={handleTotalDollarWealthChange}
+          />
+
           <div className="flex flex-wrap gap-2 m-2 mt-8">
             <Link
               href="https://github.com/Nathan-Tom/market-transfer"
@@ -389,6 +407,7 @@ export default function AutomateBettingForm() {
           apiKey={apiKey}
           addBetsDoneData={addBetsDoneData}
           refreshColumnAfterBet={refreshColumnAfterBet}
+          totalDollarWealth={totalDollarWealth}
           isLoading={isLoading}
         />
       </div>
