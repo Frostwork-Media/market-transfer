@@ -14,6 +14,7 @@ model Question {
   url                  String
   userProbability      Float
   marketCorrectionTime DateTime
+  amountInvested       Int
   aggregator           Question_aggregator
   broadQuestionId      Int?
   createdAt            DateTime            @default(now())

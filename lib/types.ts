@@ -14,10 +14,13 @@ export interface frontendQuestion {
   aggregator: Question["aggregator"];
   marketProbabilities: MarketProbabilities;
   userProbability: number;
-  correctionTime: Date;
+  marketCorrectionTime: Date;
   buy: string;
   marketReturn: number;
   kellyPerc: number;
+  maxKellyBet: number;
+  singleBetCurrentInvestment: number;
+  betAction: string;
   rOI: number;
   rOIOverTime: number;
 }
@@ -31,7 +34,8 @@ export const frontendQuestionToUserQuestionDatum = (
   slug: frontendQuestion.slug,
   url: frontendQuestion.url,
   userProbability: frontendQuestion.userProbability,
-  marketCorrectionTime: frontendQuestion.correctionTime,
+  marketCorrectionTime: frontendQuestion.marketCorrectionTime,
+  amountInvested: frontendQuestion.singleBetCurrentInvestment,
   aggregator: frontendQuestion.aggregator,
   broadQuestionId: null, // TODO: frontendQuestion doesn't define broadQuestionId, so this is always null. We should probably define it in frontendQuestion
 });

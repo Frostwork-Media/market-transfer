@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import useDebounce from "../lib/hooks/useDebounce";
-import { floatToPercent } from "@/lib/utils";
 
-export default function DebouncedPercentageInput({
+export default function DebouncedInput({
+    // id, name, classname optional
+    name = "debounced-input",
+    className = "w-full text-center",
     slug,
     initialValue,
     onDebouncedChange,
@@ -15,7 +17,7 @@ export default function DebouncedPercentageInput({
         const handleChange = () => {
             onDebouncedChange(slug, debouncedFinalValue);
             console.log(
-                `DebouncedPercentageInput: ${slug} ${debouncedFinalValue}`
+                `DebouncedInput: ${slug} ${debouncedFinalValue}`
             )
         };
 
@@ -26,8 +28,9 @@ export default function DebouncedPercentageInput({
 
     return (
         <input
+            name={name}
             type="number"
-            className="w-full text-center"
+            className={className}
             value={value}
             onChange={(e) => {
                 setValue(e.target.value);

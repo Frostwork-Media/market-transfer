@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
           url: question.url ?? "",
           userProbability: question.userProbability,
           marketCorrectionTime: question.marketCorrectionTime,
+          amountInvested: question.amountInvested,
           aggregator: question.aggregator,
         })),
       }),

@@ -2,7 +2,7 @@ import React from "react";
 import { placeBetBySlug } from "@/lib/api";
 import { floatToPercent, round2SF, round4SF } from "@/lib/utils";
 import LoadingButton from "./LoadingButton";
-import DebouncedPercentageInput from "./DebouncedPercentageInput";
+import DebouncedInput from "./DebouncedInput";
 import RowDatePicker from "./RowDatePicker";
 import { Question_aggregator } from "@prisma/client";
 import {
@@ -16,18 +16,14 @@ export default function BettingTable({
   setUserData,
   apiKey,
   addBetsDoneData,
-  userData,
   refreshColumnAfterBet,
-  totalDollarWealth,
   isLoading,
 }: {
   tableData: frontendQuestion[];
   setUserData: (userData: UserQuestionDatum[]) => Promise<void>;
   apiKey: any;
   addBetsDoneData: any;
-  userData: any;
   refreshColumnAfterBet: any;
-  totalDollarWealth: number;
   isLoading: boolean;
 }) {
   console.log("Mounting betting table with data", tableData);
@@ -42,6 +38,8 @@ export default function BettingTable({
     "Return",
     "Kelly %",
     "Max bet",
+    "Amount Invested",
+    "Action",
     "ROI",
     "ROI per day",
     "", // button
@@ -51,41 +49,52 @@ export default function BettingTable({
   const handleMyPChange = async (slug, value) => {
     // Convert percentage value back to a float between 0 and 1
     const newUserProbability = parseFloat(value) / 100;
-    const newRow: UserQuestionDatum = {
-      slug: slug,
-      url: tableData.find((row) => row.slug === slug).url || null,
-      userProbability: newUserProbability,
-      marketCorrectionTime: tableData.find((row) => row.slug === slug)
-        .correctionTime,
-      aggregator: tableData.find((row) => row.slug === slug).aggregator,
-      broadQuestionId: null,
-    };
-
-    // Update the user data
-    const updatedUserData = tableData.map((row) => {
-      if (row.slug === slug) {
-        return newRow;
-      }
-
-      return frontendQuestionToUserQuestionDatum(row);
-    });
-    setUserData(updatedUserData);
-  };
-
-  const handleDateChange = async (slug, newDate) => {
     const updatedUserData = tableData.map((row) => {
       if (row.slug === slug) {
         return {
           ...row,
-          correctionTime: newDate,
+          userProbability: newUserProbability,
         };
       }
       return row;
     });
     setUserData(updatedUserData.map(frontendQuestionToUserQuestionDatum));
+  }
+
+  const handleDateChange = async (slug, newDate) => {
+    console.log("Date change table data");
+    console.log(tableData);
+    const updatedUserData = tableData.map((row) => {
+      if (row.slug === slug) {
+        return {
+          ...row,
+          marketCorrectionTime: newDate,
+        };
+      }
+      console.log("Row", row);
+      return row;
+    });
+    setUserData(updatedUserData.map(frontendQuestionToUserQuestionDatum));
   };
 
+  const handleAmountInvestedChange = async (slug, value) => {
+    console.log("Amount invests data", tableData);
+    const updatedData = tableData.map((row) => {
+      if (row.slug === slug) {
+        return {
+          ...row,
+          singleBetCurrentInvestment: parseFloat(value),
+          };
+        }
+        return row;
+      }
+    );
+    console.log("Amount invested change", updatedData);
+    setUserData(updatedData.map(frontendQuestionToUserQuestionDatum));
+  }
+
   const handleDeleteRow = (slug) => {
+    console.log("Deleting row", slug);
     const updatedData = [...tableData];
     const index = updatedData.findIndex((row) => row.slug === slug);
     updatedData.splice(index, 1);
@@ -110,6 +119,8 @@ export default function BettingTable({
         alert(`Error placing bet. ${error}`);
       });
   };
+
+  console.log("Rendering betting table with data", tableData);
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -151,7 +162,7 @@ export default function BettingTable({
                 )}
               </td>
               <td className="w-32 px-4 py-2 border">
-                <DebouncedPercentageInput
+                <DebouncedInput
                   slug={row.slug}
                   initialValue={Number((row.userProbability * 100).toFixed(2))}
                   onDebouncedChange={handleMyPChange}
@@ -160,18 +171,23 @@ export default function BettingTable({
               <td className="px-4 py-2 border">
                 <RowDatePicker
                   name="correctionTime"
-                  selected={row.correctionTime}
+                  selected={row.marketCorrectionTime}
                   className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   onChange={(newDate) => handleDateChange(row.slug, newDate)}
                 />
               </td>
               <td className="px-4 py-2 border">{row.buy}</td>
-              {/*<td className="px-4 py-2 border">{floatToPercent(row.marketWinChance)}</td>
-                        <td className="px-4 py-2 border">{floatToPercent(row.myWinChance)}</td>*/}
               <td className="px-4 py-2 border">{round2SF(row.marketReturn)}</td>
               <td className="px-4 py-2 border">{round2SF(row.kellyPerc)}</td>
-              <td className="px-4 py-2 border">{round2SF(row.kellyPerc*totalDollarWealth)}</td>
-              {/*<td className="px-4 py-2 border">{round2SF(row.betEVreturn)}</td>*/}
+              <td className="px-4 py-2 border">{round2SF(row.maxKellyBet)}</td>
+              <td className="w-32 px-4 py-2 border">
+                <DebouncedInput
+                  slug={row.slug}
+                  initialValue={round2SF(row.singleBetCurrentInvestment)}
+                  onDebouncedChange={handleAmountInvestedChange}
+                />
+              </td>
+              <td className="px-4 py-2 border">{row.betAction}</td>
               <td className="px-4 py-2 border">{round2SF(row.rOI)}</td>
               <td className="px-4 py-2 border">{round4SF(row.rOIOverTime)}</td>
               <td>

@@ -1,5 +1,4 @@
 import DatePicker from "react-datepicker";
-import { Question } from "@prisma/client";
 import { useCallback } from "react";
 
 export default function RowDatePicker({

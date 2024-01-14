@@ -1,15 +1,10 @@
-import { promises } from "dns";
+import { ACTION } from "next/dist/client/components/app-router-headers";
 import {
   frontendQuestion,
   UserQuestionDatum,
   MarketProbabilities,
 } from "./types";
-import { Question } from "@prisma/client";
-import {
-  getMarketByUrl,
-  getQuestionsFromDatabase,
-  placeBetBySlug,
-} from "@/lib/api";
+
 
 enum BetType {
   BuyYes,
@@ -17,7 +12,14 @@ enum BetType {
   NoBet,
 }
 
-export const getBetType = (
+enum BetAction {
+  BuyPosition,
+  SellPosition,
+  HoldPosition,
+  Problem,
+}
+
+const getBetType = (
   marketProbability: MarketProbabilities,
   userProbability: number
 ): BetType => {
@@ -31,9 +33,9 @@ export const getBetType = (
   }
 };
 
-export const NO_BET = null;
+const NO_BET = null;
 
-export const calcMarketWinChance = (
+const calcMarketWinChance = (
   marketProbability: MarketProbabilities,
   betType: BetType
 ): number | typeof NO_BET => {
@@ -46,7 +48,7 @@ export const calcMarketWinChance = (
   }
 };
 
-export const calcMyWinChance = (
+const calcMyWinChance = (
   myProbability: number,
   betType: BetType
 ): number | typeof NO_BET => {
@@ -59,7 +61,7 @@ export const calcMyWinChance = (
   }
 };
 
-export const calcMarketReturn = (
+const calcMarketReturn = (
   marketWinChance: number,
   betType: BetType
 ): number => {
@@ -69,7 +71,7 @@ export const calcMarketReturn = (
   return (1 - marketWinChance) / marketWinChance;
 };
 
-export const calcKellyBetProportion = (
+const calcKellyBetProportion = (
   marketReturn: number,
   myWinChance: number,
   betType: BetType
@@ -80,18 +82,14 @@ export const calcKellyBetProportion = (
   return myWinChance - (1 - myWinChance) / marketReturn;
 };
 
-export const calcKellyBet = (
-  myBalance: number,
+const calcMaxKellyBet = (
+  totalAmountInvested: number,
   kellyBetProportion: number,
-  betType: BetType
 ) => {
-  if (betType === BetType.NoBet) {
-    return 0;
-  }
-  return myBalance * kellyBetProportion;
+  return totalAmountInvested * kellyBetProportion;
 };
 
-export const calcBetEVreturn = (
+const calcBetEVreturn = (
   marketWinChance: number,
   myWinChance: number,
   betType: BetType
@@ -102,7 +100,7 @@ export const calcBetEVreturn = (
   return myWinChance - marketWinChance;
 };
 
-export const calcBetROI = (
+const calcBetROI = (
   betEVreturn: number,
   marketWinChance: number,
   betType: BetType
@@ -113,7 +111,7 @@ export const calcBetROI = (
   return betEVreturn / marketWinChance;
 };
 
-export const calcBetROIOverTime = (
+const calcBetROIOverTime = (
   betROI: number,
   marketCorrectionTime: Date,
   betType: BetType
@@ -126,17 +124,46 @@ export const calcBetROIOverTime = (
   return (1 + betROI) ** (1 / timeDifferenceInDays) - 1;
 };
 
+const calcBetAction = (
+  betType: BetType,
+  maxBet: number,
+  singleBetCurrentInvestment: number,
+) => {
+  console.log(betType, maxBet, singleBetCurrentInvestment)
+  if (betType !== BetType.NoBet){
+    if (singleBetCurrentInvestment < maxBet){
+      return BetAction.BuyPosition;
+    } else if(singleBetCurrentInvestment > maxBet){
+      return BetAction.SellPosition;
+    } else {
+      return BetAction.HoldPosition;
+    }
+  } else if (betType === BetType.NoBet){
+    if(singleBetCurrentInvestment <= maxBet){
+      return BetAction.HoldPosition
+    } else if (singleBetCurrentInvestment > maxBet){
+      return BetAction.Problem;
+    } else {
+      throw new Error('Current investment and max bet incomparable');
+    }
+  }
+}
+
 export const calculateBettingStatisticsFromUserAndMarketData = (
   userData: UserQuestionDatum,
-  // TODO think about manifold
+  totalAmountInvested: number,
   marketProbabilities: MarketProbabilities,
   marketTitle: string
 ) => {
-  const correctionTime = new Date(userData.marketCorrectionTime) || new Date();
+  console.log(userData);
+  console.log(marketProbabilities);
+  const marketCorrectionTime = new Date(userData.marketCorrectionTime) || new Date();
+  // TODO: predicted bet is a terrible name
   const predictedBet = getBetType(
     marketProbabilities,
     userData.userProbability
   );
+  console.log(predictedBet);
   const marketWinChance = calcMarketWinChance(
     marketProbabilities,
     predictedBet
@@ -156,9 +183,40 @@ export const calculateBettingStatisticsFromUserAndMarketData = (
   const betROI = calcBetROI(betEVreturn, marketWinChance, predictedBet);
   const betROIOverTime = calcBetROIOverTime(
     betROI,
-    correctionTime,
+    marketCorrectionTime,
     predictedBet
   );
+
+  let betActionString: string;
+  let maxKellyBet: number;
+
+  console.log("Total invested", totalAmountInvested, kellyBetProportion)
+
+  if(totalAmountInvested > 0){
+    maxKellyBet = calcMaxKellyBet(kellyBetProportion, totalAmountInvested)
+    console.log(maxKellyBet)
+    const betAction = calcBetAction(predictedBet, maxKellyBet, userData.amountInvested)
+    switch (betAction) {
+      case BetAction.BuyPosition:
+        betActionString = "Buy";
+        break;
+      case BetAction.SellPosition:
+        betActionString = "Sell";
+        break;
+      case BetAction.HoldPosition:
+        betActionString = "Hold"
+        break;
+      case BetAction.Problem:
+        betActionString = "Think"
+        break
+      default:
+        throw new Error("Bet action not recognised");
+        break;
+    }
+  } else {
+    maxKellyBet = 0;
+    betActionString = "No investments"
+  }
 
   let buy: string;
   switch (predictedBet) {
@@ -176,6 +234,7 @@ export const calculateBettingStatisticsFromUserAndMarketData = (
       break;
   }
 
+  //Todo change name of bet action above so that it doens't change from being an enum to a string
   const output: frontendQuestion = {
     title: marketTitle,
     slug: userData.slug,
@@ -183,31 +242,19 @@ export const calculateBettingStatisticsFromUserAndMarketData = (
     aggregator: userData.aggregator,
     marketProbabilities: marketProbabilities,
     userProbability: userData.userProbability,
-    correctionTime: correctionTime,
+    marketCorrectionTime: marketCorrectionTime,
     buy: buy,
     marketReturn: marketReturn,
     kellyPerc: kellyBetProportion,
+    maxKellyBet: maxKellyBet,
+    singleBetCurrentInvestment: userData.amountInvested,
+    betAction: betActionString,
     rOI: betROI,
     rOIOverTime: betROIOverTime,
   };
 
   return output;
 };
-
-//Adding to
-
-//I guess we compare slugs or ids?
-
-//if no ID add if no id
-// Check
-
-// if ID update
-
-//Reading whole database
-
-//Sort data
-
-//Todo: read from the database?
 
 export const sortData = (data, sortBy, direction) => {
   try {
@@ -307,46 +354,3 @@ export const seperateData = (userData, processedData) => {
     unmodifiedData: oldDataThatCanStay,
   };
 };
-
-// const refreshColumnAfterBet = async (slug) => {
-//     const updatedProcessedData = await Promise.all(
-//       processedData.map(async (row) => {
-//         if (row.slug === slug) {
-//           return await processData({ slug: row.slug, userProbability: row.userProbability });
-//         } else {
-//           return row;
-//         }
-//       })
-//     );
-//     console.log("Refreshed data", updatedProcessedData);
-//     const sortedProcessedData = sortData(updatedProcessedData, 'rOI', 'desc');
-//     setProcessedData(sortedProcessedData);
-//     console.log("processedData", processedData);
-//   };
-
-// const handleRefreshData = async (userData,setTableData) => {
-//     const processedData = getAllDatabaseQuestionData();
-//     const { modifiedData, unmodifiedData } = seperateData(userData, processedData);
-//     const refreshedData = await processAllData(unmodifiedData, modifiedData);
-//     setTableData(refreshedData);
-// }
-
-// export const processNewAndUpdatedData = async (modifiedData, unmodifiedData, setProcessedData) => {
-//     const newProcessedData = await Promise.all(modifiedData?.map((row) => processData(row)));
-
-//     const finalData = [...unmodifiedData, ...newProcessedData]
-
-//     const sortedData = sortData(finalData, "rOIOverTime", "desc");
-
-//     setProcessedData(sortedData);
-
-//     try {
-//         window?.localStorage.setItem('processed-data', JSON.stringify(finalData));
-//         const saveUserData:userQuestion[] = finalData.map((row) => ({ slug: row.slug, url: null, userProbability: row.userProbability, marketCorrectionTime: row.marketCorrectionTime || new Date,}));
-//         console.log(saveUserData);
-//         window?.localStorage.setItem('user-data', JSON.stringify(saveUserData));
-//     } catch (error) {
-//         console.log(error)
-//         alert('Error processing data. Please ensure it is in the correct format.');
-//     }
-// }

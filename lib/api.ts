@@ -148,6 +148,7 @@ export function getMarketsByGroupID(groupID) {
 }
 
 export async function sendQuestionsToDatabase(questionData: UserQuestionDatum[]) {
+  console.log('Sending questions to database', questionData);
   return fetch('/api/add-to-db',{
     method: 'POST',
     headers: {

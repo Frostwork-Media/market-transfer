@@ -24,17 +24,21 @@ import {
   sortData,
 } from "../lib/probabilityCalculations";
 import "react-datepicker/dist/react-datepicker.css";
+import DebouncedInput from "./DebouncedInput";
 
 export default function AutomateBettingForm() {
   const [apiKey, setApiKey] = useState("");
+  
   const [betsDoneData, setBetsDoneData] = useState([]);
   const [aggregator, setAggregator] = useState<Question_aggregator>("MANIFOLD");
   const [marketURL, setMarketURL] = useState("");
   const [prob, setMarketProb] = useState(50);
+  const [amountInvested, setAmountInvested] = useState(0)
+
   const [userData, setUserData] = useState<UserQuestionDatum[]>([]);
   const [activeTab, setActiveTab] = useState("manifold");
   const [correctionTime, setCorrectionTime] = useState(new Date());
-  const [totalDollarWealth, setTotalDollarWealth] = useState([])
+  const [totalAmountInvested, setTotalAmountInvested] = useState(0)
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCorrectionTimeChange = (date) => {
@@ -79,11 +83,13 @@ export default function AutomateBettingForm() {
   // `aggregator-slug/id` to market.
 
   const slugsByAggregator = useMemo<Record<Question_aggregator, string[]>>(
-    () =>
+    () => 
       userData.reduce((arr, m) => {
         if (arr[m.aggregator]) {
+          console.log("Adding slug to aggregator", m.aggregator, m.slug);
           arr[m.aggregator].push(m.slug);
         } else {
+          console.log("creating aggregator", m.aggregator, m.slug);
           arr[m.aggregator] = [m.slug];
         }
         return arr;
@@ -94,6 +100,8 @@ export default function AutomateBettingForm() {
   const [markets, setMarkets] = useState<Record<string, Market>>({});
 
   useEffect(() => {
+    console.log(markets);
+
     if (Object.keys(slugsByAggregator).length === 0) {
       return;
     }
@@ -101,7 +109,7 @@ export default function AutomateBettingForm() {
     setIsLoading(true);
 
     (async () => {
-      const AGGREGATOR_LOAD_ORDER: any[] = [Question_aggregator.MANIFOLD, Question_aggregator.INSIGHT];
+      const AGGREGATOR_LOAD_ORDER: any[] = [Question_aggregator.MANIFOLD, Question_aggregator.POLYMARKET, Question_aggregator.INSIGHT];
       const sortedAggregatorKeys = Object.keys(slugsByAggregator).sort(
         (a, b) => AGGREGATOR_LOAD_ORDER.indexOf(a as Question_aggregator) - AGGREGATOR_LOAD_ORDER.indexOf(b as Question_aggregator)
       );
@@ -141,6 +149,7 @@ export default function AutomateBettingForm() {
   // Now we have the user data and the market data, we can calculate the processed data.
 
   const processedData = useMemo<frontendQuestion[]>(() => {
+    console.log("Calculating processed data");
     let processedData = [];
     for (const data of userData) {
       const market = markets[`${data.aggregator}-${data.slug}`];
@@ -149,17 +158,16 @@ export default function AutomateBettingForm() {
       }
       processedData.push(
         calculateBettingStatisticsFromUserAndMarketData(
-          data,
+          data, totalAmountInvested,
           { buyYes: market.buyYes, buyNo: market.buyNo },
           market.title
         )
       );
     }
-
     const sortedProcessedData = sortData(processedData, "rOIOverTime", "desc");
-
+    console.log("Sorted processed data", sortedProcessedData);
     return sortedProcessedData;
-  }, [userData, markets]);
+  }, [userData, markets, totalAmountInvested]);
 
   // two more things missing:
   //  - sending updated data to database
@@ -188,6 +196,7 @@ export default function AutomateBettingForm() {
           url: marketURL,
           userProbability: +prob / 100,
           marketCorrectionTime: correctionTime,
+          amountInvested: amountInvested,
           aggregator: aggregator,
           broadQuestionId: null,
         },
@@ -210,6 +219,10 @@ export default function AutomateBettingForm() {
     setMarketProb(event.target.value);
   };
 
+  const handleAmountInvestedInput = (event) => {
+    setAmountInvested(event.target.value);
+  };
+
   const handleApiChange = (key) => {
     setApiKey(key);
   };
@@ -218,8 +231,8 @@ export default function AutomateBettingForm() {
     console.log("Refreshing data");
   };
 
-  const handleTotalDollarWealthChange = (event) => {
-    setTotalDollarWealth(event.target.value)
+  const handleTotalAmountInvestedChange = (event) => {
+    setTotalAmountInvested(event.target.value)
   }
 
   const refreshColumnAfterBet = async (slug) => {
@@ -351,6 +364,21 @@ export default function AutomateBettingForm() {
                   className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
 
+                <label
+                  htmlFor="amount_invested"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Probability (0-100):
+                </label>
+
+                <DebouncedInput
+                  name="amount_invested"
+                  className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  slug={marketURL}
+                  initialValue={totalAmountInvested}
+                  onDebouncedChange={handleAmountInvestedInput}
+                />
+
                 <LoadingButton
                   passOnClick={addToTable}
                   buttonText={"Add to table"}
@@ -374,11 +402,11 @@ export default function AutomateBettingForm() {
           </label>
 
           <input
-            id="dollar-wealth"
-            name="dollar-wealth"
+            id="amount-invested"
+            name="amount-invested"
             className="block w-full mt-1 border border-gray-200 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            value={totalDollarWealth}
-            onChange={handleTotalDollarWealthChange}
+            value={totalAmountInvested}
+            onChange={handleTotalAmountInvestedChange}
           />
 
           <div className="flex flex-wrap gap-2 m-2 mt-8">
@@ -401,13 +429,11 @@ export default function AutomateBettingForm() {
       </div>
       <div className="my-4">
         <BettingTable
-          userData={userData}
           tableData={processedData}
           setUserData={setUserDataAndPersist}
           apiKey={apiKey}
           addBetsDoneData={addBetsDoneData}
           refreshColumnAfterBet={refreshColumnAfterBet}
-          totalDollarWealth={totalDollarWealth}
           isLoading={isLoading}
         />
       </div>
