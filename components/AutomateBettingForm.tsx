@@ -368,7 +368,7 @@ export default function AutomateBettingForm() {
                   htmlFor="amount_invested"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Probability (0-100):
+                  Total investment amount:
                 </label>
 
                 <DebouncedInput

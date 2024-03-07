@@ -70,9 +70,9 @@ export default function BettingTable({
           ...row,
           marketCorrectionTime: newDate,
         };
+      } else {
+        return row;
       }
-      console.log("Row", row);
-      return row;
     });
     setUserData(updatedUserData.map(frontendQuestionToUserQuestionDatum));
   };
